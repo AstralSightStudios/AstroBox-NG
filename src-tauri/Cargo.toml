@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "modules/*",
+    "plugins/*"
+]
+resolver = "3"
+
+default-members = ["modules/app"]

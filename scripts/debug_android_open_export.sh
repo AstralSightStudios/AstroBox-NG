@@ -1,0 +1,1 @@
+pnpm run tauri android build --debug --open -t aarch64
