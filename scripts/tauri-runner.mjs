@@ -7,7 +7,6 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 const tauriModuleDir = path.join(projectRoot, 'src-tauri/modules/app');
 const tauriCliEntry = path.join(projectRoot, 'node_modules/@tauri-apps/cli/tauri.js');
-const overrideConfig = path.join(projectRoot, 'scripts/tauri.local.json');
 
 const [, , command, ...restArgs] = process.argv;
 
@@ -18,7 +17,7 @@ if (!command) {
 
 const child = spawn(
   process.execPath,
-  [tauriCliEntry, command, '--config', overrideConfig, ...restArgs],
+  [tauriCliEntry, command, ...restArgs],
   {
     cwd: tauriModuleDir,
     stdio: 'inherit',

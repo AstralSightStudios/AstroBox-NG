@@ -1,3 +1,1 @@
-cd ./src-tauri/
-cargo install tauri-cli
-cargo tauri android build -t aarch64
+node ./scripts/tauri-runner.mjs android build -t aarch64
