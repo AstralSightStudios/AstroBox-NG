@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "lib": ["DOM", "ES2021"],
+    "jsx": "react-jsx",
+    "target": "ES2021",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "useDefineForClassFields": true,
+
+    /* modules */
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noUncheckedSideEffectImports": true,
+
+    /* type checking */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    /* path alias */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["web/src/*"]
+    }
+  },
+  "include": ["web/src"]
+}

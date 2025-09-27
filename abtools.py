@@ -154,18 +154,18 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
                     continue
                 print(f"[{name}] Cloned.")
 
-            if is_private:
-                try:
-                    (target / "__PRIV_CLONED").write_text("ok\n", encoding="utf-8")
-                except Exception as ex:
-                    eprint(f"[{name}] write __PRIV_CLONED failed: {ex}")
-
         except KeyboardInterrupt:
             eprint("\nOperation interrupted.")
             return 130
         except Exception as ex:
             overall_rc = 1
             eprint(f"[{name}] unexpected error: {ex}")
+
+    if include_private:
+        try:
+            ("__PRIV_CLONED").write_text("ok\n", encoding="utf-8")
+        except Exception as ex:
+            eprint(f"[{name}] write __PRIV_CLONED failed: {ex}")
 
     return overall_rc
 
@@ -198,7 +198,10 @@ def run_build(target: Optional[str], extra: List[str]) -> int:
         return 1
 
 def run_init_extras():
-    pass
+    print(">> init: installing node dependencies...")
+    run_cmd(["pnpm", "i"])
+    print("Please select all packages and confirm to build them.")
+    run_cmd(["pnpm", "approve-builds"])
 
 def run_init(xml_path: Path, include_private: bool, verbose: bool) -> int:
     print(">>> init: run sync first ...")

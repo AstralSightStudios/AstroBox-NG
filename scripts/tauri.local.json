@@ -1,0 +1,6 @@
+{
+  "build": {
+    "beforeDevCommand": "pnpm --workspace-root dev",
+    "beforeBuildCommand": "pnpm --workspace-root build"
+  }
+}
