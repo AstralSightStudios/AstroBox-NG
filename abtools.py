@@ -114,11 +114,7 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
                 print(f"[skip private] {name} ({url}) -> {target}")
             continue
 
-        print(f"=== Repo: {name} ===")
-        print(f"URL      : {url}")
-        print(f"Branch   : {branch}")
-        print(f"Target   : {target}")
-        print(f"Type     : {'private' if is_private else 'public'}")
+        print(f"📦 Syncing Repo: {name} ({branch}) ({url}) ({'private' if is_private else 'public'})")
 
         try:
             if target.exists() and is_git_repo(target):
@@ -141,7 +137,7 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
                     eprint(f"[{name}] git pull failed (conflict/manual fix needed?):\n{out}")
                     continue
 
-                print(f"[{name}] Updated to latest.")
+                print(f"✅ [{name}] Updated to latest.")
             else:
                 # Fresh clone
                 ensure_dir(target)
@@ -152,7 +148,7 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
                     overall_rc = 1
                     eprint(f"[{name}] git clone failed:\n{out}")
                     continue
-                print(f"[{name}] Cloned.")
+                print(f"✅ [{name}] Successfully cloned to {target}.")
 
         except KeyboardInterrupt:
             eprint("\nOperation interrupted.")
@@ -163,7 +159,7 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
 
     if include_private:
         try:
-            ("__PRIV_CLONED").write_text("ok\n", encoding="utf-8")
+            Path("./__PRIV_CLONED").write_text("ok\n", encoding="utf-8")
         except Exception as ex:
             eprint(f"[{name}] write __PRIV_CLONED failed: {ex}")
 
@@ -200,7 +196,7 @@ def run_build(target: Optional[str], extra: List[str]) -> int:
 def run_init_extras():
     print(">> init: installing node dependencies...")
     run_cmd(["pnpm", "i"])
-    print("Please select all packages and confirm to build them.")
+    print("If needs, Please select all packages and confirm to build them.")
     run_cmd(["pnpm", "approve-builds"])
 
 def run_init(xml_path: Path, include_private: bool, verbose: bool) -> int:
@@ -262,14 +258,17 @@ def main():
 
     if args.command == "init":
         rc = run_init(xml_path, include_private=args.private, verbose=args.verbose)
+        print("✅ All tasks have been completed")
         sys.exit(rc)
 
     elif args.command == "sync":
         rc = sync_repos(xml_path, include_private=args.private, verbose=args.verbose)
+        print("✅ All tasks have been completed")
         sys.exit(rc)
 
     elif args.command == "build":
         rc = run_build(args.target, args.extra)
+        print("✅ All tasks have been completed")
         sys.exit(rc)
 
     elif args.command == "help":
