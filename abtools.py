@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
 import sys
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple, List
 
@@ -46,6 +46,266 @@ def run_cmd(cmd: List[str], cwd: Optional[Path] = None, retries: int = 2, retry_
                 continue
             return 1, last_out
     return 1, last_out
+
+
+ANSI_RESET = "\033[0m"
+ANSI_COLORS = {
+    "yellow": "\033[33m",
+    "green": "\033[32m",
+    "red": "\033[31m",
+    "magenta": "\033[35m",
+    "cyan": "\033[36m",
+    "blue": "\033[34m",
+    "gray": "\033[90m",
+    "white": "\033[37m",
+}
+
+
+def color_text(text: str, color: str) -> str:
+    return f"{ANSI_COLORS.get(color, '')}{text}{ANSI_RESET}" if color in ANSI_COLORS else text
+
+
+STATUS_STYLES = {
+    "M": (ANSI_COLORS["yellow"], "🛠️"),
+    "A": (ANSI_COLORS["green"], "🆕"),
+    "D": (ANSI_COLORS["red"], "🗑️"),
+    "R": (ANSI_COLORS["magenta"], "🔁"),
+    "C": (ANSI_COLORS["cyan"], "📋"),
+    "?": (ANSI_COLORS["blue"], "❓"),
+    "!": (ANSI_COLORS["red"], "⚠️"),
+    "U": (ANSI_COLORS["red"], "🤝"),
+}
+
+
+@dataclass
+class RepoEntry:
+    name: str
+    path: Path
+    is_private: bool
+
+
+def collect_repo_entries(xml_path: Path, include_private: bool = True) -> List[RepoEntry]:
+    root_dir = xml_path.parent.resolve()
+    xml_root = load_xml(xml_path)
+    entries: List[RepoEntry] = []
+
+    for repo in xml_root.findall("repo"):
+        name = repo.get("name") or (repo.get("path") or "(unnamed)")
+        path_attr = repo.get("path")
+        if not path_attr:
+            eprint(f"Skip: {name}, missing path attribute.")
+            continue
+
+        repo_path = (root_dir / path_attr).resolve()
+        is_private = get_repo_priv_flag(repo)
+        if is_private and not include_private:
+            continue
+
+        entries.append(RepoEntry(name=name, path=repo_path, is_private=is_private))
+
+    return entries
+
+
+def _colorize_status_line(line: str) -> str:
+    if not line.strip():
+        return line
+
+    status_part = line[:2]
+    remainder = line[3:] if len(line) > 3 else ""
+
+    colored_status_chars = []
+    emoji = None
+    for ch in status_part:
+        if ch == " ":
+            colored_status_chars.append(" ")
+            continue
+        color, candidate_emoji = STATUS_STYLES.get(ch, (ANSI_COLORS["gray"], "📄"))
+        colored_status_chars.append(f"{color}{ch}{ANSI_RESET}")
+        if emoji is None and candidate_emoji:
+            emoji = candidate_emoji
+
+    if emoji is None:
+        emoji = "📄"
+
+    colored_status = "".join(colored_status_chars)
+    return f"{emoji} {colored_status} {remainder}".rstrip()
+
+
+def format_status_output(raw: str) -> str:
+    lines = [_colorize_status_line(line) for line in raw.rstrip().splitlines()]
+    return "\n".join(lines)
+
+
+def get_upstream_and_ahead(repo_path: Path) -> Tuple[Optional[str], Optional[int]]:
+    rc, upstream_out = run_cmd(
+        ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+        cwd=repo_path,
+    )
+    if rc != 0:
+        return None, None
+
+    upstream = upstream_out.strip()
+    if not upstream:
+        return None, None
+
+    rc, ahead_out = run_cmd(["git", "rev-list", "--count", "@{u}..HEAD"], cwd=repo_path)
+    if rc != 0:
+        return upstream, None
+
+    ahead_out = ahead_out.strip()
+    try:
+        ahead = int(ahead_out)
+    except ValueError:
+        ahead = None
+
+    return upstream, ahead
+
+
+def ensure_commit_message(provided: Optional[str]) -> str:
+    if provided and provided.strip():
+        return provided.strip()
+
+    while True:
+        try:
+            msg = input("Enter commit message: ")
+        except KeyboardInterrupt:
+            print()
+            raise
+        except EOFError:
+            msg = ""
+
+        msg = msg.strip()
+        if msg:
+            return msg
+        print("Commit message must not be empty. Please try again.")
+
+
+def run_commit(xml_path: Path, message: Optional[str], verbose: bool) -> int:
+    check_git_available()
+
+    repo_root = xml_path.parent.resolve()
+    entries: List[RepoEntry] = [RepoEntry(name="Root repository", path=repo_root, is_private=False)]
+    entries.extend(collect_repo_entries(xml_path))
+
+    print(color_text(">>> Checking repository status...", "cyan"))
+
+    repos_with_changes: List[Tuple[RepoEntry, str]] = []
+    overall_rc = 0
+
+    for entry in entries:
+        if not entry.path.exists():
+            overall_rc = 1
+            eprint(f"⚠️ Skipping {color_text(entry.name, 'yellow')}: path not found -> {entry.path}")
+            continue
+
+        if not is_git_repo(entry.path):
+            overall_rc = 1
+            eprint(f"⚠️ Skipping {color_text(entry.name, 'yellow')}: {entry.path} is not a git repository")
+            continue
+
+        rc, status_out = run_cmd(["git", "status", "--short"], cwd=entry.path)
+        if rc != 0:
+            overall_rc = 1
+            eprint(f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_out}")
+            continue
+
+        if status_out.strip():
+            repos_with_changes.append((entry, status_out))
+            print(f"📂 {color_text(entry.name, 'white')} ({color_text(str(entry.path), 'gray')})")
+            print(format_status_output(status_out))
+            print("")
+        elif verbose:
+            print(f"😴 {color_text(entry.name, 'gray')} has no pending changes.")
+
+    if not repos_with_changes:
+        print(color_text("No repositories require commits. Nothing to do.", "yellow"))
+        return overall_rc
+
+    try:
+        commit_message = ensure_commit_message(message)
+    except KeyboardInterrupt:
+        eprint(color_text("Commit flow cancelled.", "red"))
+        return 130
+
+    for entry, _ in repos_with_changes:
+        print(f"📝 {color_text('Committing', 'magenta')} {color_text(entry.name, 'white')} ...")
+
+        rc, out = run_cmd(["git", "add", "-A"], cwd=entry.path)
+        if rc != 0:
+            overall_rc = 1
+            eprint(f"❌ {color_text(entry.name, 'red')} git add failed:\n{out}")
+            continue
+
+        rc, out = run_cmd(["git", "commit", "-m", commit_message], cwd=entry.path)
+        if rc != 0:
+            overall_rc = 1
+            eprint(f"❌ {color_text(entry.name, 'red')} commit failed:\n{out}")
+            continue
+
+        print(f"✅ {color_text(entry.name, 'green')} commit finished.")
+
+    return overall_rc
+
+
+def run_push(xml_path: Path, verbose: bool) -> int:
+    check_git_available()
+
+    repo_root = xml_path.parent.resolve()
+    entries: List[RepoEntry] = [RepoEntry(name="Root repository", path=repo_root, is_private=False)]
+    entries.extend(collect_repo_entries(xml_path))
+
+    overall_rc = 0
+
+    for entry in entries:
+        if not entry.path.exists():
+            overall_rc = 1
+            eprint(f"⚠️ Skipping {color_text(entry.name, 'yellow')}: path not found -> {entry.path}")
+            continue
+
+        if not is_git_repo(entry.path):
+            overall_rc = 1
+            eprint(f"⚠️ Skipping {color_text(entry.name, 'yellow')}: {entry.path} is not a git repository")
+            continue
+
+        rc, status_out = run_cmd(["git", "status", "--short"], cwd=entry.path)
+        if rc != 0:
+            overall_rc = 1
+            eprint(f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_out}")
+            continue
+
+        if status_out.strip():
+            overall_rc = 1
+            eprint(f"⚠️ {color_text(entry.name, 'yellow')} still has uncommitted changes. Push skipped.")
+            if verbose:
+                print(format_status_output(status_out))
+            continue
+
+        rc, branch_out = run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=entry.path)
+        branch = branch_out.strip() if rc == 0 else "(unknown)"
+
+        upstream, ahead = get_upstream_and_ahead(entry.path)
+        if ahead is not None and ahead == 0:
+            if verbose:
+                target = upstream or "upstream"
+                print(f"ℹ️ {color_text(entry.name, 'gray')} already matches {color_text(target, 'cyan')}. Skipping push.")
+            continue
+
+        rc, out = run_cmd(["git", "push"], cwd=entry.path)
+        if rc != 0:
+            overall_rc = 1
+            eprint(f"❌ {color_text(entry.name, 'red')} push failed (current branch {color_text(branch, 'yellow')}):\n{out}")
+            continue
+
+        if ahead is not None and upstream:
+            print(
+                f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} "
+                f"({color_text(branch, 'cyan')}) -> {color_text(upstream, 'yellow')} "
+                f"({color_text(str(ahead), 'green')} commit{'s' if ahead != 1 else ''})."
+            )
+        else:
+            print(f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} ({color_text(branch, 'cyan')}).")
+
+    return overall_rc
 
 def parse_bool(val: Optional[str]) -> bool:
     if val is None:
@@ -242,6 +502,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_build.add_argument("target", nargs="?", help="Build target, e.g. android / ios / web / backend")
     p_build.add_argument("extra", nargs=argparse.REMAINDER, help="Extra args passed to target branch")
 
+    # commit
+    p_commit = subparsers.add_parser("commit", help="Commit root repo and all sub repos")
+    p_commit.add_argument("-m", "--message", help="Commit message (prompted if omitted)")
+
+    # push
+    subparsers.add_parser("push", help="Push root repo and all sub repos")
+
     # help
     subparsers.add_parser("help", help="Print command help")
 
@@ -254,7 +521,7 @@ def main():
     if args.help or not args.command:
         print_help_and_exit(parser)
 
-    xml_path = Path(args.file)
+    xml_path = Path(args.file).resolve()
 
     if args.command == "init":
         rc = run_init(xml_path, include_private=args.private, verbose=args.verbose)
@@ -268,6 +535,16 @@ def main():
 
     elif args.command == "build":
         rc = run_build(args.target, args.extra)
+        print("✅ All tasks have been completed")
+        sys.exit(rc)
+
+    elif args.command == "commit":
+        rc = run_commit(xml_path, args.message, args.verbose)
+        print("✅ All tasks have been completed")
+        sys.exit(rc)
+
+    elif args.command == "push":
+        rc = run_push(xml_path, args.verbose)
         print("✅ All tasks have been completed")
         sys.exit(rc)
 
