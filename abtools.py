@@ -161,13 +161,18 @@ def get_upstream_and_ahead(repo_path: Path) -> Tuple[Optional[str], Optional[int
     return upstream, ahead
 
 
-def ensure_commit_message(provided: Optional[str]) -> str:
+def ensure_commit_message(provided: Optional[str], repo_name: Optional[str] = None) -> str:
     if provided and provided.strip():
         return provided.strip()
 
+    prompt = "Enter commit message"
+    if repo_name:
+        prompt += f" [{repo_name}]"
+    prompt += ": "
+
     while True:
         try:
-            msg = input("Enter commit message: ")
+            msg = input(prompt)
         except KeyboardInterrupt:
             print()
             raise
@@ -221,13 +226,13 @@ def run_commit(xml_path: Path, message: Optional[str], verbose: bool) -> int:
         print(color_text("No repositories require commits. Nothing to do.", "yellow"))
         return overall_rc
 
-    try:
-        commit_message = ensure_commit_message(message)
-    except KeyboardInterrupt:
-        eprint(color_text("Commit flow cancelled.", "red"))
-        return 130
-
     for entry, _ in repos_with_changes:
+        try:
+            commit_message = ensure_commit_message(message, repo_name=entry.name)
+        except KeyboardInterrupt:
+            eprint(color_text("Commit flow cancelled.", "red"))
+            return 130
+
         print(f"📝 {color_text('Committing', 'magenta')} {color_text(entry.name, 'white')} ...")
 
         rc, out = run_cmd(["git", "add", "-A"], cwd=entry.path)
