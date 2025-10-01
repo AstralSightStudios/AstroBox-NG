@@ -6,9 +6,10 @@ import sys
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -84,6 +85,17 @@ class RepoEntry:
     is_private: bool
 
 
+@dataclass
+class WorkspaceRewriteSummary:
+    included_modules: List[str]
+    included_plugins: List[str]
+    skipped_private_modules: List[str]
+    skipped_private_plugins: List[str]
+    missing_modules: List[str]
+    missing_plugins: List[str]
+    members_entries: List[str]
+
+
 def collect_repo_entries(xml_path: Path, include_private: bool = True) -> List[RepoEntry]:
     root_dir = xml_path.parent.resolve()
     xml_root = load_xml(xml_path)
@@ -136,6 +148,62 @@ def format_status_output(raw: str) -> str:
     return "\n".join(lines)
 
 
+def get_head_commit(repo_path: Path) -> Optional[str]:
+    rc, out = run_cmd(["git", "rev-parse", "HEAD"], cwd=repo_path)
+    if rc != 0:
+        return None
+    commit = out.strip()
+    return commit or None
+
+
+def _diff_to_status_lines(diff_out: str) -> List[str]:
+    lines: List[str] = []
+    for raw in diff_out.strip().splitlines():
+        raw = raw.strip()
+        if not raw:
+            continue
+        parts = raw.split("\t")
+        if not parts:
+            continue
+
+        status_token = parts[0]
+        primary = status_token[0] if status_token else "?"
+
+        if primary in ("R", "C") and len(parts) >= 3:
+            desc = f"{parts[1]} -> {parts[2]}"
+        elif len(parts) >= 2:
+            desc = parts[1]
+        else:
+            desc = raw.replace("\t", " ")
+
+        lines.append(f"{primary}  {desc}")
+
+    return lines
+
+
+def collect_pull_change_details(repo_path: Path, old_head: str, new_head: str) -> Tuple[Optional[str], Optional[str]]:
+    status_block: Optional[str] = None
+    log_block: Optional[str] = None
+
+    rc, diff_out = run_cmd(
+        ["git", "diff", "--name-status", f"{old_head}..{new_head}"],
+        cwd=repo_path,
+    )
+    if rc == 0 and diff_out.strip():
+        status_lines = _diff_to_status_lines(diff_out)
+        if status_lines:
+            status_block = format_status_output("\n".join(status_lines))
+
+    rc, log_out = run_cmd(
+        ["git", "log", "--oneline", f"{old_head}..{new_head}"],
+        cwd=repo_path,
+    )
+    if rc == 0 and log_out.strip():
+        log_block = log_out.strip()
+
+    return status_block, log_block
+
+
 def get_upstream_and_ahead(repo_path: Path) -> Tuple[Optional[str], Optional[int]]:
     rc, upstream_out = run_cmd(
         ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
@@ -185,7 +253,13 @@ def ensure_commit_message(provided: Optional[str], repo_name: Optional[str] = No
         print("Commit message must not be empty. Please try again.")
 
 
-def run_commit(xml_path: Path, message: Optional[str], verbose: bool) -> int:
+def run_commit(
+    xml_path: Path,
+    message: Optional[str],
+    verbose: bool,
+    reset_workspace: bool,
+    restore_workspace: bool,
+) -> int:
     check_git_available()
 
     repo_root = xml_path.parent.resolve()
@@ -226,6 +300,8 @@ def run_commit(xml_path: Path, message: Optional[str], verbose: bool) -> int:
         print(color_text("No repositories require commits. Nothing to do.", "yellow"))
         return overall_rc
 
+    cargo_toml = repo_root / "src-tauri" / "Cargo.toml"
+
     for entry, _ in repos_with_changes:
         try:
             commit_message = ensure_commit_message(message, repo_name=entry.name)
@@ -235,17 +311,24 @@ def run_commit(xml_path: Path, message: Optional[str], verbose: bool) -> int:
 
         print(f"📝 {color_text('Committing', 'magenta')} {color_text(entry.name, 'white')} ...")
 
-        rc, out = run_cmd(["git", "add", "-A"], cwd=entry.path)
-        if rc != 0:
-            overall_rc = 1
-            eprint(f"❌ {color_text(entry.name, 'red')} git add failed:\n{out}")
-            continue
+        guard_enabled = reset_workspace and entry.path == repo_root
+        with CargoWorkspaceGuard(
+            cargo_toml=cargo_toml,
+            enabled=guard_enabled,
+            restore_after=restore_workspace,
+            verbose=verbose,
+        ):
+            rc, out = run_cmd(["git", "add", "-A"], cwd=entry.path)
+            if rc != 0:
+                overall_rc = 1
+                eprint(f"❌ {color_text(entry.name, 'red')} git add failed:\n{out}")
+                continue
 
-        rc, out = run_cmd(["git", "commit", "-m", commit_message], cwd=entry.path)
-        if rc != 0:
-            overall_rc = 1
-            eprint(f"❌ {color_text(entry.name, 'red')} commit failed:\n{out}")
-            continue
+            rc, out = run_cmd(["git", "commit", "-m", commit_message], cwd=entry.path)
+            if rc != 0:
+                overall_rc = 1
+                eprint(f"❌ {color_text(entry.name, 'red')} commit failed:\n{out}")
+                continue
 
         print(f"✅ {color_text(entry.name, 'green')} commit finished.")
 
@@ -327,6 +410,207 @@ def get_repo_priv_flag(elem: ET.Element) -> bool:
         return vis == "private"
     return parse_bool(elem.get("private"))
 
+
+def collect_workspace_flags(xml_root: ET.Element) -> Tuple[Dict[str, bool], Dict[str, bool]]:
+    """Return visibility flags for modules and plugins based on repos.xml."""
+
+    def extract_component(path_parts: Tuple[str, ...], marker: str) -> Optional[str]:
+        for idx, part in enumerate(path_parts):
+            if part == marker and idx + 1 < len(path_parts):
+                return path_parts[idx + 1]
+        return None
+
+    modules: Dict[str, bool] = {}
+    plugins: Dict[str, bool] = {}
+
+    for repo in xml_root.findall("repo"):
+        path_attr = repo.get("path")
+        if not path_attr:
+            continue
+
+        parts = Path(path_attr).parts
+
+        module_name = extract_component(parts, "modules")
+        if module_name:
+            modules[module_name] = get_repo_priv_flag(repo)
+            continue
+
+        plugin_name = extract_component(parts, "plugins")
+        if plugin_name:
+            plugins[plugin_name] = get_repo_priv_flag(repo)
+
+    return modules, plugins
+
+
+def format_toml_array(items: List[str]) -> str:
+    if not items:
+        return "[]"
+
+    lines = ["["]
+    for item in items:
+        lines.append(f'    "{item}",')
+    lines.append("]")
+    return "\n".join(lines)
+
+
+def ensure_trailing_newline(text: str) -> str:
+    return text if text.endswith("\n") else text + "\n"
+
+
+def generate_default_workspace_content() -> str:
+    lines = [
+        "[workspace]",
+        "members = [",
+        '    "modules/*",',
+        '    "plugins/*"',
+        "]",
+        'resolver = "3"',
+        "",
+        'default-members = ["modules/app"]',
+        "",
+    ]
+    return ensure_trailing_newline("\n".join(lines))
+
+
+class CargoWorkspaceGuard:
+    def __init__(self, cargo_toml: Path, enabled: bool, restore_after: bool, verbose: bool):
+        self.cargo_toml = cargo_toml
+        self.enabled = enabled
+        self.restore_after = restore_after
+        self.verbose = verbose
+        self.original_text: Optional[str] = None
+        self.changed = False
+
+    def __enter__(self):
+        if not self.enabled or not self.cargo_toml.exists():
+            return self
+
+        try:
+            self.original_text = self.cargo_toml.read_text(encoding="utf-8")
+        except Exception as ex:
+            eprint(f"Warning: failed to read {self.cargo_toml}: {ex}")
+            return self
+
+        default_content = generate_default_workspace_content()
+        if self.original_text != default_content:
+            if self.verbose:
+                print(f"[commit] Resetting {self.cargo_toml} to default workspace before staging.")
+            try:
+                self.cargo_toml.write_text(default_content, encoding="utf-8")
+                self.changed = True
+            except Exception as ex:
+                eprint(f"Warning: failed to write default workspace to {self.cargo_toml}: {ex}")
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.changed and self.restore_after and self.original_text is not None:
+            try:
+                self.cargo_toml.write_text(self.original_text, encoding="utf-8")
+                if self.verbose:
+                    print(f"[commit] Restored {self.cargo_toml} after commit.")
+            except Exception as ex:
+                eprint(f"Warning: failed to restore {self.cargo_toml}: {ex}")
+        return False
+
+
+def prepare_workspace_entries(
+    base_dir: Path,
+    flags: Dict[str, bool],
+    include_private: bool,
+    verbose: bool,
+    prefix: str,
+) -> Tuple[List[str], List[str], List[str]]:
+    """Build inclusion/skip lists for a workspace subdirectory."""
+
+    available: Dict[str, bool] = dict(flags)
+
+    if base_dir.exists():
+        for entry in base_dir.iterdir():
+            if entry.is_dir():
+                available.setdefault(entry.name, False)
+
+    included: List[str] = []
+    skipped_private: List[str] = []
+    missing: List[str] = []
+
+    for name in sorted(available.keys()):
+        entry_path = base_dir / name
+        is_private = available[name]
+        path_label = f"{prefix}/{name}"
+
+        if is_private and not include_private:
+            skipped_private.append(path_label)
+            if verbose:
+                print(f"[skip private] {path_label}")
+            continue
+
+        if not entry_path.exists():
+            missing.append(path_label)
+            if verbose:
+                print(f"[skip missing] {path_label} (directory missing)")
+            continue
+
+        included.append(path_label)
+
+    return included, skipped_private, missing
+
+
+def rewrite_cargo_workspace(
+    cargo_toml: Path,
+    modules_dir: Path,
+    plugins_dir: Path,
+    module_flags: Dict[str, bool],
+    plugin_flags: Dict[str, bool],
+    include_private: bool,
+    verbose: bool,
+    dry_run: bool = False,
+) -> WorkspaceRewriteSummary:
+    """Build workspace members/default-members for modules and plugins respecting visibility."""
+
+    included_modules, skipped_modules, missing_modules = prepare_workspace_entries(
+        modules_dir, module_flags, include_private, verbose, "modules"
+    )
+    included_plugins, skipped_plugins, missing_plugins = prepare_workspace_entries(
+        plugins_dir, plugin_flags, include_private, verbose, "plugins"
+    )
+
+    members_entries = included_modules + included_plugins
+
+    default_member = None
+    preferred = "modules/app"
+    if preferred in included_modules:
+        default_member = preferred
+    elif included_modules:
+        default_member = included_modules[0]
+    elif members_entries:
+        default_member = members_entries[0]
+
+    members_block = format_toml_array(members_entries)
+    default_block = format_toml_array([default_member] if default_member else [])
+
+    if not dry_run:
+        lines = [
+            "[workspace]",
+            f"members = {members_block}",
+            'resolver = "3"',
+            "",
+            f"default-members = {default_block}",
+            "",
+        ]
+
+        cargo_toml.write_text("\n".join(lines), encoding="utf-8")
+
+    return WorkspaceRewriteSummary(
+        included_modules=included_modules,
+        included_plugins=included_plugins,
+        skipped_private_modules=skipped_modules,
+        skipped_private_plugins=skipped_plugins,
+        missing_modules=missing_modules,
+        missing_plugins=missing_plugins,
+        members_entries=members_entries,
+    )
+
 def load_xml(xml_path: Path) -> ET.Element:
     if not xml_path.exists():
         eprint(f"Error: XML not found: {xml_path}")
@@ -383,6 +667,8 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
 
         try:
             if target.exists() and is_git_repo(target):
+                old_head = get_head_commit(target)
+
                 # fetch -> checkout -> pull (ff-only)
                 rc, out = run_cmd(["git", "fetch", "--all", "--prune"], cwd=target)
                 if rc != 0:
@@ -402,7 +688,30 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
                     eprint(f"[{name}] git pull failed (conflict/manual fix needed?):\n{out}")
                     continue
 
-                print(f"✅ [{name}] Updated to latest.")
+                new_head = get_head_commit(target)
+
+                if old_head and new_head and old_head != new_head:
+                    short_from = old_head[:7]
+                    short_to = new_head[:7]
+                    print(
+                        f"✅ {color_text(name, 'white')} "
+                        f"{color_text(short_from, 'cyan')} -> {color_text(short_to, 'cyan')}"
+                    )
+
+                    status_block, log_block = collect_pull_change_details(target, old_head, new_head)
+
+                    if status_block:
+                        print(status_block)
+
+                    if log_block:
+                        print(color_text("📜 Commit log:", "gray"))
+                        for line in log_block.splitlines():
+                            print(f"    {line}")
+
+                    print("")
+                elif verbose:
+                    print(f"😴 {color_text(name, 'gray')} already up to date.")
+
             else:
                 # Fresh clone
                 ensure_dir(target)
@@ -477,6 +786,90 @@ def run_init(xml_path: Path, include_private: bool, verbose: bool) -> int:
         rc = rc or 1
     return rc
 
+
+def run_dev(xml_path: Path, verbose: bool, dry_run: bool, tauri: bool) -> int:
+    project_root = xml_path.parent.resolve()
+    cargo_toml = project_root / "src-tauri" / "Cargo.toml"
+
+    if not cargo_toml.exists():
+        eprint(f"Error: Cargo.toml not found -> {cargo_toml}")
+        return 2
+
+    xml_root = load_xml(xml_path)
+    module_flags, plugin_flags = collect_workspace_flags(xml_root)
+    modules_dir = cargo_toml.parent / "modules"
+    plugins_dir = cargo_toml.parent / "plugins"
+
+    if not modules_dir.exists():
+        eprint(
+            f"Warning: {modules_dir} is missing; the Cargo workspace may still fail to compile after dev."
+        )
+
+    include_private = (project_root / "__PRIV_CLONED").exists()
+
+    print(">>> dev: refreshing Cargo workspace based on __PRIV_CLONED ...")
+    print(f"    - include_private = {'yes' if include_private else 'no'}")
+    if dry_run:
+        print("    - dry_run = yes (preview only, no write)")
+
+    summary = rewrite_cargo_workspace(
+        cargo_toml,
+        modules_dir,
+        plugins_dir,
+        module_flags,
+        plugin_flags,
+        include_private,
+        verbose,
+        dry_run=dry_run,
+    )
+
+    if verbose:
+        if summary.included_modules:
+            print("    - Included modules:")
+            for item in summary.included_modules:
+                print(f"        * {item}")
+        if summary.included_plugins:
+            print("    - Included plugins:")
+            for item in summary.included_plugins:
+                print(f"        * {item}")
+        if summary.skipped_private_modules or summary.skipped_private_plugins:
+            print("    - Skipped private entries:")
+            for item in summary.skipped_private_modules + summary.skipped_private_plugins:
+                print(f"        * {item}")
+        if summary.missing_modules or summary.missing_plugins:
+            print("    - Skipped missing directories:")
+            for item in summary.missing_modules + summary.missing_plugins:
+                print(f"        * {item}")
+
+        if summary.members_entries:
+            print("    - Final workspace members:")
+            for item in summary.members_entries:
+                print(f"        * {item}")
+
+    if not include_private and (
+        summary.skipped_private_modules or summary.skipped_private_plugins
+    ):
+        print(
+            "Tip: __PRIV_CLONED not detected, so private modules/plugins were excluded. "
+            "After cloning private repos, run `touch __PRIV_CLONED` and rerun."
+        )
+
+    if summary.missing_modules or summary.missing_plugins:
+        print(
+            "Warning: Some workspace directories are missing; Cargo may still fail to build. "
+            "Run `python abtools.py sync --private` to fetch them."
+        )
+
+    if dry_run:
+        print("ℹ️ dry-run mode did not modify Cargo.toml.")
+    else:
+        print("✅ dev refreshed Cargo workspace. This change is not committed automatically; keep or revert it as needed.")
+
+    if tauri:
+        os.system("pnpm tauri:dev")
+
+    return 0
+
 def print_help_and_exit(parser: argparse.ArgumentParser):
     print(parser.format_help())
     sys.exit(0)
@@ -503,13 +896,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument("--private", action="store_true", help="Include private repos (requires configured git creds)")
 
     # build
-    p_build = subparsers.add_parser("build", help="Run build by target (no XML, no --cmd)")
-    p_build.add_argument("target", nargs="?", help="Build target, e.g. android / ios / web / backend")
+    p_build = subparsers.add_parser("build", help="Run build by target")
+    p_build.add_argument("target", nargs="?", help="Build target, e.g. android / ios / wasm")
     p_build.add_argument("extra", nargs=argparse.REMAINDER, help="Extra args passed to target branch")
+
+    # dev
+    p_dev = subparsers.add_parser(
+        "dev",
+        help="Rewrite Cargo workspace members based on private-module availability",
+    )
+    p_dev.add_argument("--dry-run", action="store_true", help="Preview changes without touching files")
+    p_dev.add_argument("--tauri", action="store_true", help="Run tauri app development")
 
     # commit
     p_commit = subparsers.add_parser("commit", help="Commit root repo and all sub repos")
     p_commit.add_argument("-m", "--message", help="Commit message (prompted if omitted)")
+    p_commit.add_argument(
+        "--no-restore-workspace",
+        dest="restore_workspace",
+        action="store_false",
+        help="Keep the default workspace after commit instead of restoring the pre-commit content",
+    )
+    p_commit.set_defaults(restore_workspace=True)
 
     # push
     subparsers.add_parser("push", help="Push root repo and all sub repos")
@@ -543,8 +951,22 @@ def main():
         print("✅ All tasks have been completed")
         sys.exit(rc)
 
+    elif args.command == "dev":
+        rc = run_dev(xml_path, verbose=args.verbose, dry_run=args.dry_run, tauri=args.tauri)
+        if rc == 0 and args.dry_run:
+            print("✅ All tasks have been completed (dry-run)")
+        else:
+            print("✅ All tasks have been completed")
+        sys.exit(rc)
+
     elif args.command == "commit":
-        rc = run_commit(xml_path, args.message, args.verbose)
+        rc = run_commit(
+            xml_path,
+            args.message,
+            args.verbose,
+            True,
+            args.restore_workspace,
+        )
         print("✅ All tasks have been completed")
         sys.exit(rc)
 
