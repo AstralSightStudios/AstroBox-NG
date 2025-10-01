@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import os
 import sys
 import subprocess
 import time
@@ -148,6 +149,20 @@ def format_status_output(raw: str) -> str:
     return "\n".join(lines)
 
 
+def strip_workspace_noise(status_out: str, reset_workspace: bool) -> str:
+    if not reset_workspace or not status_out.strip():
+        return status_out
+
+    filtered: List[str] = []
+    for line in status_out.splitlines():
+        candidate = line[3:].strip() if len(line) > 3 else ""
+        if candidate == "src-tauri/Cargo.toml" or candidate.startswith("src-tauri/Cargo.toml ->"):
+            continue
+        filtered.append(line)
+
+    return "\n".join(filtered)
+
+
 def get_head_commit(repo_path: Path) -> Optional[str]:
     rc, out = run_cmd(["git", "rev-parse", "HEAD"], cwd=repo_path)
     if rc != 0:
@@ -282,11 +297,13 @@ def run_commit(
             eprint(f"⚠️ Skipping {color_text(entry.name, 'yellow')}: {entry.path} is not a git repository")
             continue
 
-        rc, status_out = run_cmd(["git", "status", "--short"], cwd=entry.path)
+        rc, status_raw = run_cmd(["git", "status", "--short"], cwd=entry.path)
         if rc != 0:
             overall_rc = 1
-            eprint(f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_out}")
+            eprint(f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_raw}")
             continue
+
+        status_out = strip_workspace_noise(status_raw, reset_workspace and entry.path == repo_root)
 
         if status_out.strip():
             repos_with_changes.append((entry, status_out))
@@ -301,6 +318,8 @@ def run_commit(
         return overall_rc
 
     cargo_toml = repo_root / "src-tauri" / "Cargo.toml"
+
+    workspace_default_kept = False
 
     for entry, _ in repos_with_changes:
         try:
@@ -317,12 +336,14 @@ def run_commit(
             enabled=guard_enabled,
             restore_after=restore_workspace,
             verbose=verbose,
-        ):
+        ) as guard:
             rc, out = run_cmd(["git", "add", "-A"], cwd=entry.path)
             if rc != 0:
                 overall_rc = 1
                 eprint(f"❌ {color_text(entry.name, 'red')} git add failed:\n{out}")
                 continue
+
+            guard.unstage_if_needed(entry.path)
 
             rc, out = run_cmd(["git", "commit", "-m", commit_message], cwd=entry.path)
             if rc != 0:
@@ -330,7 +351,16 @@ def run_commit(
                 eprint(f"❌ {color_text(entry.name, 'red')} commit failed:\n{out}")
                 continue
 
+        if guard_enabled and guard.changed and not guard.restore_after:
+            workspace_default_kept = True
+
         print(f"✅ {color_text(entry.name, 'green')} commit finished.")
+
+    if workspace_default_kept:
+        print(
+            "ℹ️ Workspace reset left src-tauri/Cargo.toml at the default wildcard layout. "
+            "Run `python abtools.py dev` when you need the expanded workspace again."
+        )
 
     return overall_rc
 
@@ -473,7 +503,13 @@ def generate_default_workspace_content() -> str:
 
 
 class CargoWorkspaceGuard:
-    def __init__(self, cargo_toml: Path, enabled: bool, restore_after: bool, verbose: bool):
+    def __init__(
+        self,
+        cargo_toml: Path,
+        enabled: bool,
+        restore_after: bool,
+        verbose: bool,
+    ):
         self.cargo_toml = cargo_toml
         self.enabled = enabled
         self.restore_after = restore_after
@@ -512,6 +548,14 @@ class CargoWorkspaceGuard:
             except Exception as ex:
                 eprint(f"Warning: failed to restore {self.cargo_toml}: {ex}")
         return False
+
+    def unstage_if_needed(self, repo_path: Path):
+        if not self.changed:
+            return
+        rel = os.path.relpath(self.cargo_toml, repo_path)
+        rc, out = run_cmd(["git", "reset", "--", rel], cwd=repo_path)
+        if rc != 0:
+            eprint(f"Warning: git reset for {rel} failed:\n{out}")
 
 
 def prepare_workspace_entries(
@@ -911,13 +955,33 @@ def build_parser() -> argparse.ArgumentParser:
     # commit
     p_commit = subparsers.add_parser("commit", help="Commit root repo and all sub repos")
     p_commit.add_argument("-m", "--message", help="Commit message (prompted if omitted)")
-    p_commit.add_argument(
+    reset_group = p_commit.add_mutually_exclusive_group()
+    reset_group.add_argument(
+        "--reset-workspace",
+        dest="reset_workspace",
+        action="store_true",
+        help="Temporarily reset src-tauri/Cargo.toml to the default wildcard workspace before committing the root repository (default)",
+    )
+    reset_group.add_argument(
+        "--no-reset-workspace",
+        dest="reset_workspace",
+        action="store_false",
+        help="Skip resetting src-tauri/Cargo.toml during the commit flow",
+    )
+    restore_group = p_commit.add_mutually_exclusive_group()
+    restore_group.add_argument(
+        "--restore-workspace",
+        dest="restore_workspace",
+        action="store_true",
+        help="Restore the pre-commit workspace layout after committing (reapplies dev configuration)",
+    )
+    restore_group.add_argument(
         "--no-restore-workspace",
         dest="restore_workspace",
         action="store_false",
-        help="Keep the default workspace after commit instead of restoring the pre-commit content",
+        help="Keep the default wildcard workspace after commit (default)",
     )
-    p_commit.set_defaults(restore_workspace=True)
+    p_commit.set_defaults(reset_workspace=True, restore_workspace=False)
 
     # push
     subparsers.add_parser("push", help="Push root repo and all sub repos")
@@ -964,7 +1028,7 @@ def main():
             xml_path,
             args.message,
             args.verbose,
-            True,
+            args.reset_workspace,
             args.restore_workspace,
         )
         print("✅ All tasks have been completed")
