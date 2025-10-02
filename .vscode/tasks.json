@@ -13,7 +13,8 @@
         {
             "label": "ab commit",
             "type": "shell",
-            "command": "python abtools.py commit"
+            "command": "python abtools.py commit",
+            "problemMatcher": []
         },
         {
             "label": "ab push",
