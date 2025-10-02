@@ -18,7 +18,8 @@
     "framer-motion": "^12.23.12",
     "motion": "^12.23.12",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@number-flow/react": "^0.5.10",
