@@ -7,7 +7,8 @@
         {
             "label": "ab sync",
             "type": "shell",
-            "command": "python abtools.py sync"
+            "command": "python abtools.py sync",
+            "problemMatcher": []
         },
         {
             "label": "ab commit",
@@ -17,7 +18,7 @@
         {
             "label": "ab push",
             "type": "shell",
-            "problemMatcher":[],
+            "problemMatcher": [],
             "command": "python abtools.py push"
         },
         {
