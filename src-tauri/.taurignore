@@ -1,2 +1,3 @@
 **/.gradle/*
 modules/pb/
+app\src\buildinfo.rs
