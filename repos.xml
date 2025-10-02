@@ -34,7 +34,6 @@
         path="src-tauri/modules/pb"
         branch="main"
         visibility="public" />
-
     
     <repo
         name="Rust module: pluginsystem"
@@ -43,6 +42,12 @@
         branch="main"
         visibility="public" />
 
+    <repo
+        name="WIT Files for Rust module: pluginsystem"
+        url="https://github.com/AstralSightStudios/AstroBox-Plugin-WIT"
+        path="src-tauri/modules/pluginsystem/wit"
+        branch="main"
+        visibility="public" />
 
     <repo
         name="Rust module: provider"
@@ -50,7 +55,6 @@
         path="src-tauri/modules/provider"
         branch="main"
         visibility="public" />
-
 
     <repo
         name="Tauri plugin: btclassic-spp"
