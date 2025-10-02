@@ -1,0 +1,41 @@
+{
+    // 使用 IntelliSense 了解相关属性。
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://code.visualstudio.com/docs/debugtest/tasks
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ab sync",
+            "type": "shell",
+            "command": "python abtools.py sync"
+        },
+        {
+            "label": "ab commit",
+            "type": "shell",
+            "command": "python abtools.py commit"
+        },
+        {
+            "label": "ab push",
+            "type": "shell",
+            "problemMatcher":[],
+            "command": "python abtools.py push"
+        },
+        {
+            "label": "ab dev",
+            "type": "shell",
+            "problemMatcher": [
+                "$rustc-watch"
+            ],
+            "command": "python abtools.py dev"
+        },
+        {
+            "label": "ab dev tauri",
+            "type": "shell",
+            "command": "python abtools.py dev --tauri",
+            "problemMatcher": [
+                "$rustc-watch"
+            ],
+            "isBackground": true
+        }
+    ]
+}
