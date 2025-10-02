@@ -3832,6 +3832,7 @@ dependencies = [
 name = "pluginsystem"
 version = "2.0.0"
 dependencies = [
+ "anyhow",
  "wasmtime",
  "wasmtime-wasi",
 ]
