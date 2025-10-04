@@ -12,6 +12,7 @@ dist/
 
 # IDE
 .vscode/*
+!.vscode/tasks.json
 !.vscode/extensions.json
 .idea
 
