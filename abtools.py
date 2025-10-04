@@ -801,6 +801,29 @@ def run_build(target: Optional[str], extra: List[str]) -> int:
             # TODO
             return 0
 
+        elif target.lower() == "wasm":
+            wasm_cmd = [
+                "wasm-pack",
+                "build",
+                "src-tauri/modules/app_wasm",
+                "--target",
+                "web",
+            ]
+            if extra:
+                wasm_cmd.extend(extra)
+            rc, out = run_cmd(wasm_cmd)
+            if rc != 0:
+                eprint("wasm-pack build failed:\n" + out)
+                return rc
+            print(out)
+
+            rc, out = run_cmd(["pnpm", "build"])
+            if rc != 0:
+                eprint("pnpm build failed:\n" + out)
+                return rc
+            print(out)
+            return 0
+
         else:
             # TODO
             return 0
@@ -831,7 +854,7 @@ def run_init(xml_path: Path, include_private: bool, verbose: bool) -> int:
     return rc
 
 
-def run_dev(xml_path: Path, verbose: bool, dry_run: bool, tauri: bool) -> int:
+def run_dev(xml_path: Path, verbose: bool, dry_run: bool, tauri: bool, wasm: bool) -> int:
     project_root = xml_path.parent.resolve()
     cargo_toml = project_root / "src-tauri" / "Cargo.toml"
 
@@ -909,8 +932,30 @@ def run_dev(xml_path: Path, verbose: bool, dry_run: bool, tauri: bool) -> int:
     else:
         print("✅ dev refreshed Cargo workspace. This change is not committed automatically; keep or revert it as needed.")
 
+    if tauri and wasm:
+        eprint("Error: --tauri and --wasm cannot be used together.")
+        return 2
+
     if tauri:
         os.system("pnpm tauri:dev")
+    elif wasm:
+        print(">>> dev: building wasm package (dev profile)...")
+        wasm_cmd = [
+            "wasm-pack",
+            "build",
+            "src-tauri/modules/app_wasm",
+            "--target",
+            "web",
+            "--dev",
+        ]
+        rc, out = run_cmd(wasm_cmd, cwd=project_root)
+        if rc != 0:
+            eprint("wasm-pack build failed:\n" + out)
+            return rc
+        if verbose:
+            print(out)
+        print(">>> dev: starting web dev server (pnpm dev)...")
+        os.system("pnpm dev")
 
     return 0
 
@@ -951,6 +996,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_dev.add_argument("--dry-run", action="store_true", help="Preview changes without touching files")
     p_dev.add_argument("--tauri", action="store_true", help="Run tauri app development")
+    p_dev.add_argument("--wasm", action="store_true", help="Run web dev server with wasm backend")
 
     # commit
     p_commit = subparsers.add_parser("commit", help="Commit root repo and all sub repos")
@@ -1016,7 +1062,13 @@ def main():
         sys.exit(rc)
 
     elif args.command == "dev":
-        rc = run_dev(xml_path, verbose=args.verbose, dry_run=args.dry_run, tauri=args.tauri)
+        rc = run_dev(
+            xml_path,
+            verbose=args.verbose,
+            dry_run=args.dry_run,
+            tauri=args.tauri,
+            wasm=args.wasm,
+        )
         if rc == 0 and args.dry_run:
             print("✅ All tasks have been completed (dry-run)")
         else:

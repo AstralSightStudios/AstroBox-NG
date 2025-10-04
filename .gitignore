@@ -20,3 +20,4 @@ dist/
 web
 
 __PRIV_CLONED
+src-tauri/modules/app_wasm/pkg/

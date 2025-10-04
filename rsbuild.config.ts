@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -33,11 +34,13 @@ export default defineConfig({
         ...config.watchOptions,
         ignored: /[\\/](src-tauri)[\\/]/,
       };
+      const wasmEntry = path.resolve(projectRoot, 'src-tauri/modules/app_wasm/pkg/astrobox_ng_wasm.js');
       config.resolve = {
         ...config.resolve,
         alias: {
           ...config.resolve?.alias,
           '@': webSrc,
+          ...(fs.existsSync(wasmEntry) ? { '@app-wasm': wasmEntry } : {}),
         },
       };
     }
