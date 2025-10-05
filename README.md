@@ -60,5 +60,11 @@ wasm-pack build src-tauri/modules/app_wasm --target web
 ### Tauri APP
 运行以下命令以启动本地开发服务器，并以Debug编译配置运行App版AstroBox (仅在拥有app模块访问权限的情况下可用)：
 ```shell
-pnpm tauri:dev
+python abtools.py dev --tauri
+```
+
+### 网页版
+运行以下命令以启动本地开发服务器，并以Debug编译配置运行基于WebAssembly的网页版AstroBox
+```shell
+python abtools.py dev --wasm
 ```
