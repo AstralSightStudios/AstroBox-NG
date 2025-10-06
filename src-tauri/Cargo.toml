@@ -1,8 +1,17 @@
 [workspace]
 members = [
-    "modules/*",
-    "plugins/*"
+    "modules/app",
+    "modules/app_wasm",
+    "modules/bluetooth",
+    "modules/core",
+    "modules/pb",
+    "modules/pluginsystem",
+    "modules/provider",
+    "plugins/btclassic-spp",
+    "plugins/live-activity",
 ]
 resolver = "3"
 
-default-members = ["modules/app"]
+default-members = [
+    "modules/app",
+]
