@@ -9,6 +9,11 @@
             "type": "shell",
             "command": "python abtools.py sync",
             "problemMatcher": []
+        },{
+            "label": "ab sync private",
+            "type": "shell",
+            "command": "python abtools.py sync --private",
+            "problemMatcher": []
         },
         {
             "label": "ab commit",
