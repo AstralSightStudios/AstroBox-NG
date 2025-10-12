@@ -675,6 +675,63 @@ def is_git_repo(path: Path) -> bool:
 def safe_branch(elem: ET.Element) -> str:
     return (elem.get("branch") or "main").strip()
 
+def sync_root_repo(project_root: Path, verbose: bool = False) -> int:
+    if not project_root.exists():
+        eprint(f"[root] Path not found -> {project_root}")
+        return 1
+
+    if not is_git_repo(project_root):
+        eprint(f"[root] {project_root} is not a git repository; skip.")
+        return 1
+
+    old_head = get_head_commit(project_root)
+    rc, branch_out = run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=project_root)
+    current_branch = branch_out.strip() if rc == 0 else "(unknown)"
+
+    rc, url_out = run_cmd(["git", "remote", "get-url", "--push", "origin"], cwd=project_root)
+    remote_url = url_out.strip() if rc == 0 else "(local-only)"
+
+    print(
+        f"📦 Syncing Repo: Root repository ({current_branch}) "
+        f"({remote_url}) (public)"
+    )
+
+    rc, out = run_cmd(["git", "fetch", "--all", "--prune"], cwd=project_root)
+    if rc != 0:
+        eprint(f"[root] git fetch failed:\n{out}")
+        return 1
+
+    rc, out = run_cmd(["git", "pull", "--ff-only"], cwd=project_root)
+    if rc != 0:
+        eprint(f"[root] git pull failed (conflict/manual fix needed?):\n{out}")
+        return 1
+
+    new_head = get_head_commit(project_root)
+
+    if old_head and new_head and old_head != new_head:
+        short_from = old_head[:7]
+        short_to = new_head[:7]
+        print(
+            f"✅ {color_text('Root repository', 'white')} "
+            f"{color_text(short_from, 'cyan')} -> {color_text(short_to, 'cyan')}"
+        )
+
+        status_block, log_block = collect_pull_change_details(project_root, old_head, new_head)
+
+        if status_block:
+            print(status_block)
+
+        if log_block:
+            print(color_text("📜 Commit log:", "gray"))
+            for line in log_block.splitlines():
+                print(f"    {line}")
+
+        print("")
+    elif verbose:
+        print(f"😴 {color_text('Root repository', 'gray')} already up to date.")
+
+    return 0
+
 def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> int:
     """
     （默认仅处理公开仓；加 --private 才处理私有仓）
@@ -683,11 +740,16 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
     root = load_xml(xml_path)
 
     repos = root.findall("repo")
+    overall_rc = 0
+    project_root = xml_path.parent.resolve()
+
+    rc_root = sync_root_repo(project_root, verbose=verbose)
+    if rc_root != 0:
+        overall_rc = 1
+
     if not repos:
         print("Note: no <repo> nodes found in XML.")
-        return 0
-
-    overall_rc = 0
+        return overall_rc
 
     for repo in repos:
         name = repo.get("name") or "(unnamed)"
@@ -698,13 +760,17 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
             overall_rc = overall_rc or 1
             continue
 
-        target = Path(path_attr).resolve()
+        target = (project_root / path_attr).resolve()
         branch = safe_branch(repo)
         is_private = get_repo_priv_flag(repo)
 
         if is_private and not include_private:
             if verbose:
                 print(f"[skip private] {name} ({url}) -> {target}")
+            continue
+        if target == project_root:
+            if verbose:
+                print(f"[skip duplicate] {name} points to root repository which is already synced.")
             continue
 
         print(f"📦 Syncing Repo: {name} ({branch}) ({url}) ({'private' if is_private else 'public'})")
