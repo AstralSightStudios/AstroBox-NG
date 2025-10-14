@@ -7,6 +7,7 @@
     "build": "rsbuild build",
     "dev": "rsbuild dev",
     "preview": "rsbuild preview",
+    "tauri": "node ./scripts/tauri-runner.mjs",
     "tauri:dev": "node ./scripts/tauri-runner.mjs dev",
     "tauri:build": "node ./scripts/tauri-runner.mjs build"
   },
@@ -31,7 +32,7 @@
     "@rsbuild/core": "^1.4.13",
     "@rsbuild/plugin-react": "^1.3.4",
     "@tailwindcss/postcss": "^4.1.13",
-    "@tauri-apps/cli": "^2.7.1",
+    "@tauri-apps/cli": "^2.8.0",
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
