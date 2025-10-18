@@ -452,6 +452,7 @@ dependencies = [
  "bluest",
  "btclassic-spp",
  "futures-util",
+ "log",
  "serde",
  "tauri",
  "tokio",
