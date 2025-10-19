@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
+import { pluginSvgr } from '@rsbuild/plugin-svgr';
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const webSrc = path.resolve(projectRoot, 'web/src');
@@ -18,7 +19,7 @@ const buildDefines = {
 } satisfies Record<string, string>;
 
 export default defineConfig({
-  plugins: [pluginReact()],
+  plugins: [pluginReact(), pluginSvgr()],
   source: {
     entry: {
       app: './web/src/index.tsx',
