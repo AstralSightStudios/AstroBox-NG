@@ -536,6 +536,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "bluer 0.17.4",
+ "corelib",
  "dispatch",
  "futures-core",
  "futures-util",
@@ -3020,6 +3021,7 @@ name = "live-activity"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "corelib",
  "mac-notification-sys",
  "serde",
  "tauri",
@@ -4022,6 +4024,7 @@ name = "pluginsystem"
 version = "2.0.0"
 dependencies = [
  "anyhow",
+ "corelib",
  "crossbeam-channel",
  "log",
  "once_cell",

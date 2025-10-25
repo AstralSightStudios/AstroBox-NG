@@ -1,5 +1,9 @@
 [build]
 rustflags = ["--cfg=web_sys_unstable_apis"]
 
+[env]
+RUST_LIB_BACKTRACE = "1"
+RUST_BACKTRACE = "1"
+
 [target.wasm32-unknown-unknown]
 rustflags = ["--cfg=getrandom_backend=\"wasm_js\"", "--cfg=web_sys_unstable_apis"]
