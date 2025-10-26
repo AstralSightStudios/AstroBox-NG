@@ -4074,6 +4074,8 @@ dependencies = [
  "pollster",
  "serde",
  "serde_json",
+ "tauri",
+ "tauri-plugin-dialog",
  "tokio",
  "wasmtime",
  "wasmtime-wasi",
