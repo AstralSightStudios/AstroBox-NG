@@ -17,6 +17,7 @@ dist/
 .idea
 
 /scriptgen
+/target
 
 web
 
