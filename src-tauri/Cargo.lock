@@ -4301,11 +4301,7 @@ dependencies = [
  "corelib",
  "crossbeam-channel",
  "hex",
-<<<<<<< HEAD
- "log",
-=======
- "log 0.4.27",
->>>>>>> e1a7f8f0875e3d8838f27180b16bf9fce3ee5412
+ "log 0.4.27"
  "once_cell",
  "pollster",
  "serde",
