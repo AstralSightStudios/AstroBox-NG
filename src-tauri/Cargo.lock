@@ -4612,6 +4612,7 @@ dependencies = [
  "async-trait",
  "csv",
  "futures-util",
+ "log 0.4.27",
  "rand 0.9.2",
  "reqwest",
  "serde",
@@ -7556,7 +7557,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34949b42822155826b41db8e5d0c1be3a2bd296c747577a43a3e6daefc296142"
 dependencies = [
  "dlib",
- "log",
+ "log 0.4.27",
  "pkg-config",
 ]
 
