@@ -1,7 +1,10 @@
 [workspace]
 members = [
     "modules/*",
-    "plugins/*"
+    "plugins/*",
+]
+exclude = [
+    "modules/app_esp32c3",
 ]
 resolver = "3"
 
