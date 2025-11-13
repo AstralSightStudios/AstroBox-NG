@@ -8,9 +8,9 @@
     />
 
     <repo
-        name="Rust module: app_esp32c3"
-        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-App-ESP32C3"
-        path="src-tauri/modules/app_esp32c3"
+        name="Rust module: app_esp32s3"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-App-ESP32S3"
+        path="src-tauri/modules/app_esp32s3"
         branch="main"
         visibility="public"
     />
