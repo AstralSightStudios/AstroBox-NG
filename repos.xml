@@ -39,6 +39,13 @@
         visibility="public"
     />
 
+    <repo
+        name="Rust module: frontbridge"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-FrontBridge"
+        path="src-tauri/modules/frontbridge"
+        branch="main"
+        visibility="public"
+    />
 
     <repo
         name="Rust module: pb"
