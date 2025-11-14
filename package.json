@@ -23,6 +23,7 @@
     "motion": "^12.23.24",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-photo-view": "^1.2.7",
     "reactflow": "^11.11.4",
     "sonner": "^2.0.7"
   },
