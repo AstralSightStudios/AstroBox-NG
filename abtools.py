@@ -3,14 +3,13 @@
 
 import argparse
 import os
-import sys
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
-import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict
+from typing import Dict, List, Optional, Tuple
 
 
 def eprint(*args, **kwargs):
@@ -92,7 +91,7 @@ STATUS_STYLES = {
 }
 
 # Crates that require a dedicated toolchain and must stay out of the default workspace.
-WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32c3"]
+WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3"]
 
 
 @dataclass
