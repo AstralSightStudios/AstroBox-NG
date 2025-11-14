@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ctrl/tinycolor':
+        specifier: ^4.2.0
+        version: 4.2.0
       '@tauri-apps/api':
         specifier: ^2.9.0
         version: 2.9.0
@@ -448,6 +451,10 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       postcss: ^8.4
+
+  '@ctrl/tinycolor@4.2.0':
+    resolution: {integrity: sha512-kzyuwOAQnXJNLS9PSyrk0CWk35nWJW/zl/6KvnTBMFK65gm7U1/Z5BqjxeapjZCIhQcM/DsrEmcbRwDyXyXK4A==}
+    engines: {node: '>=14'}
 
   '@emnapi/core@1.7.0':
     resolution: {integrity: sha512-pJdKGq/1iquWYtv1RRSljZklxHCOCAJFJrImO5ZLKPJVJlVUcs8yFwNQlqS0Lo8xT1VAXXTCZocF9n26FWEKsw==}
@@ -1294,21 +1301,25 @@ packages:
     resolution: {integrity: sha512-n7UGSBzv7PiX+V1Q2bY3S1XWyN3RCykCQUgfhZ+xWietCM/1349jgN7DoXKPllqlof1GPGBjziHU0sQZTC4tag==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/binding-linux-arm64-musl@1.6.1':
     resolution: {integrity: sha512-P7nx0jsKxx7g3QAnH9UnJDGVgs1M2H7ZQl68SRyrs42TKOd9Md22ynoMIgCK1zoy+skssU6MhWptluSggXqSrA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/binding-linux-x64-gnu@1.6.1':
     resolution: {integrity: sha512-SdiurC1bV/QHnj7rmrBYJLdsat3uUDWl9KjkVjEbtc8kQV0Ri4/vZRH0nswgzx7hZNY2j0jYuCm5O8+3qeJEMg==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/binding-linux-x64-musl@1.6.1':
     resolution: {integrity: sha512-JoSJu29nV+auOePhe8x2Fzqxiga1YGNcOMWKJ5Uj8rHBZ8FPAiiE+CpLG8TwfpHsivojrY/sy6fE8JldYLV5TQ==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/binding-wasm32-wasi@1.6.1':
     resolution: {integrity: sha512-u5NiSHxM7LtIo4cebq/hQPJ9o39u127am3eVJHDzdmBVhTYYO5l7XVUnFmcU8hNHuj/4lJzkFviWFbf3SaRSYA==}
@@ -1469,24 +1480,28 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-arm64-musl@4.1.17':
     resolution: {integrity: sha512-HvZLfGr42i5anKtIeQzxdkw/wPqIbpeZqe7vd3V9vI3RQxe3xU1fLjss0TjyhxWcBaipk7NYwSrwTwK1hJARMg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-linux-x64-gnu@4.1.17':
     resolution: {integrity: sha512-M3XZuORCGB7VPOEDH+nzpJ21XPvK5PyjlkSFkFziNHGLc5d6g3di2McAAblmaSUNl8IOmzYwLx9NsE7bplNkwQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@tailwindcss/oxide-linux-x64-musl@4.1.17':
     resolution: {integrity: sha512-k7f+pf9eXLEey4pBlw+8dgfJHY4PZ5qOUFDyNf7SI6lHjQ9Zt7+NcscjpwdCEbYi6FI5c2KDTDWyf2iHcCSyyQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@tailwindcss/oxide-wasm32-wasi@4.1.17':
     resolution: {integrity: sha512-cEytGqSSoy7zK4JRWiTCx43FsKP/zGr0CsuMawhH67ONlH+T79VteQeJQRO/X7L0juEUA8ZyuYikcRBf0vsxhg==}
@@ -1545,30 +1560,35 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@tauri-apps/cli-linux-arm64-musl@2.9.3':
     resolution: {integrity: sha512-fzvG+jEn5/iYGNH6Z2IRMheYFC4pJdXa19BR9fFm6Bdn2cuajRLDKdUcEME/DCtwqclphXtFZTrT4oezY5vI/A==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@tauri-apps/cli-linux-riscv64-gnu@2.9.3':
     resolution: {integrity: sha512-qV8DZXI/fZwawk6T3Th1g6smiNC2KeQTk7XFgKvqZ6btC01z3UTsQmNGvI602zwm3Ld1TBZb4+rEWu2QmQimmw==}
     engines: {node: '>= 10'}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@tauri-apps/cli-linux-x64-gnu@2.9.3':
     resolution: {integrity: sha512-tquyEONCNRfqEBWEe4eAHnxFN5yY5lFkCuD4w79XLIovUxVftQ684+xLp7zkhntkt4y20SMj2AgJa/+MOlx4Kg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@tauri-apps/cli-linux-x64-musl@2.9.3':
     resolution: {integrity: sha512-v2cBIB/6ji8DL+aiL5QUykU3ZO8OoJGyx50/qv2HQVzkf85KdaYSis3D/oVRemN/pcDz+vyCnnL3XnzFnDl4JQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@tauri-apps/cli-win32-arm64-msvc@2.9.3':
     resolution: {integrity: sha512-ZGvBy7nvrHPbE0HeKp/ioaiw8bNgAHxWnb7JRZ4/G0A+oFj0SeSFxl9k5uU6FKnM7bHM23Gd1oeaDex9g5Fceg==}
@@ -2042,24 +2062,28 @@ packages:
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-arm64-musl@1.30.2:
     resolution: {integrity: sha512-5Vh9dGeblpTxWHpOx8iauV02popZDsCYMPIgiuw97OJ5uaDsL86cnqSFs5LZkG3ghHoX5isLgWzMs+eD1YzrnA==}
     engines: {node: '>= 12.0.0'}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-linux-x64-gnu@1.30.2:
     resolution: {integrity: sha512-Cfd46gdmj1vQ+lR6VRTTadNHu6ALuw2pKR9lYq4FnhvgBc4zWY1EtZcAc6EffShbb1MFrIPfLDXD6Xprbnni4w==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   lightningcss-linux-x64-musl@1.30.2:
     resolution: {integrity: sha512-XJaLUUFXb6/QG2lGIW6aIk6jKdtjtcffUT0NKvIqhSBY3hh9Ch+1LCeH80dR9q9LBjG3ewbDjnumefsLsP6aiA==}
     engines: {node: '>= 12.0.0'}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   lightningcss-win32-arm64-msvc@1.30.2:
     resolution: {integrity: sha512-FZn+vaj7zLv//D/192WFFVA0RgHawIcHqLX9xuWiQt7P0PtdFEVaxgF9rjM/IRYHQXNnk61/H/gb2Ei+kUQ4xQ==}
@@ -2913,6 +2937,8 @@ snapshots:
   '@csstools/utilities@2.0.0(postcss@8.5.6)':
     dependencies:
       postcss: 8.5.6
+
+  '@ctrl/tinycolor@4.2.0': {}
 
   '@emnapi/core@1.7.0':
     dependencies:
