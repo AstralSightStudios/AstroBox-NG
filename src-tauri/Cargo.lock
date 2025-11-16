@@ -5233,6 +5233,7 @@ dependencies = [
  "once_cell",
  "os_info",
  "pollster",
+ "rand 0.7.3",
  "serde",
  "serde_json",
  "sha2",
