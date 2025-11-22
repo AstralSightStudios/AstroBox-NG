@@ -34,6 +34,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "account"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "frontbridge",
+ "serde",
+ "serde_json",
+ "tauri",
+]
+
+[[package]]
 name = "add_getters_setters"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
