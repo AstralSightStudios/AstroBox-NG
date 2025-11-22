@@ -970,7 +970,7 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
         try:
             Path("./__PRIV_CLONED").write_text("ok\n", encoding="utf-8")
         except Exception as ex:
-            eprint(f"[{name}] write __PRIV_CLONED failed: {ex}")
+            eprint(f"write __PRIV_CLONED failed: {ex}")
 
     return overall_rc
 
