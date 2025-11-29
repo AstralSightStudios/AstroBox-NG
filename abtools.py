@@ -93,6 +93,12 @@ STATUS_STYLES = {
 # Crates that require a dedicated toolchain and must stay out of the default workspace.
 WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3"]
 
+RUSTIX_PATCH_LINES = [
+    "[patch.crates-io]",
+    'rustix = { git = "https://github.com/66hh/rustix-android-patch", branch = "main" }',
+    "",
+]
+
 
 @dataclass
 class RepoEntry:
@@ -564,6 +570,7 @@ def generate_default_workspace_content() -> str:
             "",
         ]
     )
+    lines.extend(RUSTIX_PATCH_LINES)
     return ensure_trailing_newline("\n".join(lines))
 
 
@@ -739,8 +746,11 @@ def rewrite_cargo_workspace(
                 "",
             ]
         )
+        lines.extend(RUSTIX_PATCH_LINES)
 
-        cargo_toml.write_text("\n".join(lines), encoding="utf-8")
+        cargo_toml.write_text(
+            ensure_trailing_newline("\n".join(lines)), encoding="utf-8"
+        )
 
     return WorkspaceRewriteSummary(
         included_modules=included_modules,
