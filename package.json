@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@ctrl/tinycolor": "^4.2.0",
+    "@dnd-kit/helpers": "^0.1.21",
+    "@dnd-kit/react": "^0.1.21",
     "@tauri-apps/api": "^2.9.0",
     "@tauri-apps/plugin-dialog": "^2.4.2",
     "@tauri-apps/plugin-fs": "~2.4.4",
