@@ -36,15 +36,18 @@
 ## 实机效果
 暂未解禁
 
-## 开源协议
-采用自有协议 [AstroBox-NG Non-Commercial Community Source License](LICENSE)
+## 开源协议 / License
+此项目以AGPL 3.0授权，但包含额外条款。
+This project is licensed under AGPL 3.0, but includes additional terms.
 
-协议要点（不完整总结仅供参考，请以原文为准）：
-1. 仅允许 **非商业使用**。
-2. 可查看与修改源码，但若提供给他人使用，必须 **公开你的修改**。
-3. 允许分发源码（非商业），但必须保留本许可证。
-4. **禁止**分发任何二进制或可执行文件，除非获得书面授权。
-5. 插件不受本许可证限制，只要不包含本项目代码。
+### 额外条款 / Additional Terms
+根据AGPL 3.0所述可选附加条款，本项目额外附加署名要求，使用此项目需在遵守AGPL 3.0条款后额外为此项目添加署名，署名包括但不限于本项目仓库地址，作者名等。
+
+注: 附加条款以中文版为准，其他语言仅供参考！
+
+According to the optional additional terms stated in AGPL 3.0, this project includes an additional attribution requirement. When using this project, after complying with the terms of AGPL 3.0, you must also add attribution for this project, which includes but is not limited to the project repository address, the author's name, etc.
+
+Note: The additional terms are based on the Chinese version. Other languages are for reference only!
 
 ## 快速上手
 
