@@ -11,7 +11,7 @@
 <p align="center">
     <img src="https://img.shields.io/badge/rust-1.90.0%20+-orange.svg?style=flat-square" alt="Rust 1.90.0+">
     <img src="https://img.shields.io/badge/tauri-v2-lightgrey.svg?style=flat-square" alt="Tauri v2">
-    <img src="https://img.shields.io/badge/license-ABNG%20NCSL-red.svg?style=flat-square" alt="license abng-ncsl">
+    <img src="https://img.shields.io/badge/license-AGPLv3-red.svg?style=flat-square" alt="license gpl-v3">
     <img src="https://img.shields.io/badge/pnpm-required-02ACFA.svg?style=flat-square" alt="pnpm required">
 </p>
 
