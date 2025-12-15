@@ -22,6 +22,10 @@ const buildDefines = {
   __ASTROBOX_BUILD_USER__: JSON.stringify(buildUser),
   __ASTROBOX_BUILD_ENV__: JSON.stringify(buildEnv),
 } satisfies Record<string, string>;
+const isProduction = buildEnv === "production";
+const isDev = !isProduction;
+const rspackCacheDir = path.resolve(projectRoot, "node_modules/.cache/rspack");
+const watchIgnorePattern = /[\\/](?:src-tauri|dist|target)[\\/]/;
 
 export default defineConfig({
   plugins: [pluginReact(), pluginSvgr()],
@@ -50,7 +54,7 @@ export default defineConfig({
     rspack(config) {
       config.watchOptions = {
         ...config.watchOptions,
-        ignored: /[\\/](src-tauri)[\\/]/,
+        ignored: watchIgnorePattern,
       };
       const wasmEntry = path.resolve(
         projectRoot,
@@ -64,15 +68,44 @@ export default defineConfig({
           ...(fs.existsSync(wasmEntry) ? { "@app-wasm": wasmEntry } : {}),
         },
       };
+      if (isDev) {
+        config.devtool = "eval-cheap-module-source-map";
+        config.cache = {
+          type: "filesystem",
+          cacheDirectory: rspackCacheDir,
+          buildDependencies: {
+            config: [path.resolve(projectRoot, "rsbuild.config.ts")],
+            packageJson: [path.resolve(projectRoot, "package.json")],
+            lockfile: [path.resolve(projectRoot, "pnpm-lock.yaml")],
+            tsconfig: [path.resolve(projectRoot, "tsconfig.json")],
+          },
+        };
+        const managedPaths = [
+          ...(config.snapshot?.managedPaths ?? []),
+          /[\\/]node_modules[\\/]/,
+          /[\\/]node_modules[\\/]\\.pnpm[\\/]/,
+        ];
+        const immutablePaths = [
+          ...(config.snapshot?.immutablePaths ?? []),
+          /[\\/]node_modules[\\/]\\.pnpm[\\/]/,
+        ];
+        config.snapshot = {
+          ...(config.snapshot ?? {}),
+          managedPaths,
+          immutablePaths,
+        };
+      }
     },
   },
   performance: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole: isProduction,
+    chunkSplit: isProduction ? { strategy: "split-by-experience" } : false,
   },
   dev: {
     lazyCompilation: true,
   },
   output: {
-    polyfill: "usage",
+    polyfill: isProduction ? "usage" : "off",
+    injectStyles: isDev,
   },
 });
