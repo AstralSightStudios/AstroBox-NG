@@ -9,3 +9,6 @@ exclude = [
 resolver = "3"
 
 default-members = ["modules/app"]
+
+[patch.crates-io]
+rustix = { git = "https://github.com/66hh/rustix-android-patch", branch = "main" }
