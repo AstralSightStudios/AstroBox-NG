@@ -88,6 +88,14 @@
     />
 
     <repo
+        name="Rust module: privaccount"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-Private-Account"
+        path="src-tauri/modules/privaccount"
+        branch="main"
+        visibility="private"
+    />
+
+    <repo
         name="Tauri plugin: btclassic-spp"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-BtClassicSpp"
         path="src-tauri/plugins/btclassic-spp"
