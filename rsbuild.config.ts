@@ -44,6 +44,10 @@ export default defineConfig({
         "viewport-fit=cover ,width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
     },
   },
+  server: {
+      port: 9191,
+      host: '0.0.0.0'
+  },
   tools: {
     lightningcssLoader: false,
     htmlPlugin(config, { entryName }) {
