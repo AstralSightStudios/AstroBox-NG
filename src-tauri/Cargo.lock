@@ -23,6 +23,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "pluginsystem",
  "privaccount",
+ "privprovider",
  "provider",
  "serde",
  "serde_json",
@@ -5294,6 +5295,27 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "tauri",
+ "tokio",
+]
+
+[[package]]
+name = "privprovider"
+version = "0.1.0"
+dependencies = [
+ "account",
+ "aes-gcm",
+ "anyhow",
+ "async-trait",
+ "futures-util",
+ "hex",
+ "log 0.4.28",
+ "provider",
+ "rand 0.9.2",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2",
  "tauri",
  "tokio",
 ]
