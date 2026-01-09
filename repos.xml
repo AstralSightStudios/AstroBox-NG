@@ -80,6 +80,14 @@
     />
 
     <repo
+        name="Rust module: privprovider"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-Private-Provider"
+        path="src-tauri/modules/privprovider"
+        branch="main"
+        visibility="private"
+    />
+
+    <repo
         name="Rust module: account"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Module-Account"
         path="src-tauri/modules/account"
