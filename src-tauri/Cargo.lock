@@ -15,6 +15,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "corelib",
+ "frontbridge",
  "image",
  "image-palette",
  "live-activity",
