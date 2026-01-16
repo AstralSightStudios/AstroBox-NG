@@ -5162,6 +5162,7 @@ name = "pluginsystem"
 version = "2.0.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "corelib",
  "crossbeam-channel",
  "frontbridge",
