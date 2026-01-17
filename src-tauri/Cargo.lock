@@ -5178,6 +5178,7 @@ dependencies = [
  "sys-locale",
  "tauri",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "tauri-plugin-opener",
  "tokio",
  "wasmtime",
