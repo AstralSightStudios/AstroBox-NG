@@ -24,6 +24,8 @@
     "@tauri-apps/plugin-os": "^2.3.2",
     "axios": "^1.13.2",
     "dayjs": "^1.11.19",
+    "embla-carousel-react": "^8.6.0",
+    "embla-carousel-wheel-gestures": "^8.1.0",
     "figma-squircle": "^1.1.0",
     "framer-motion": "^12.23.24",
     "motion": "^12.23.24",
