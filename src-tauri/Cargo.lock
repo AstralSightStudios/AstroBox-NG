@@ -5300,6 +5300,7 @@ dependencies = [
  "corelib",
  "crossbeam-channel",
  "frontbridge",
+ "futures-util",
  "hex",
  "log 0.4.28",
  "once_cell",
