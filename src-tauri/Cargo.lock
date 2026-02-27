@@ -3985,8 +3985,11 @@ name = "live-activity"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "block2 0.6.2",
  "corelib",
  "mac-notification-sys",
+ "objc2 0.6.3",
+ "objc2-user-notifications",
  "serde",
  "tauri",
  "tauri-plugin",
@@ -4789,7 +4792,10 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9df9128cbbfef73cda168416ccf7f837b62737d748333bfe9ab71c245d76613e"
 dependencies = [
+ "bitflags 2.10.0",
+ "block2 0.6.2",
  "objc2 0.6.3",
+ "objc2-core-location",
  "objc2-foundation 0.3.2",
 ]
 
