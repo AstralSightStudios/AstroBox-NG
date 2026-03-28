@@ -20,6 +20,7 @@ dependencies = [
  "image-palette",
  "live-activity",
  "log 0.4.28",
+ "netcfg",
  "objc2 0.6.3",
  "objc2-app-kit",
  "objc2-foundation 0.3.2",
@@ -27,6 +28,7 @@ dependencies = [
  "privaccount",
  "privprovider",
  "provider",
+ "reqwest 0.12.24",
  "serde",
  "serde_json",
  "tauri",
@@ -55,6 +57,7 @@ dependencies = [
  "cipher",
  "frontbridge",
  "md-5",
+ "netcfg",
  "rand 0.8.5",
  "rc4",
  "reqwest 0.12.24",
@@ -63,7 +66,6 @@ dependencies = [
  "serde_json",
  "sha1",
  "sha2",
- "sysproxy",
  "tauri",
  "url",
 ]
@@ -3127,19 +3129,50 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8a6fe56c0038198998a6f217ca4e7ef3a5e51f46163bd6dd60b5c71ca6c6502"
 dependencies = [
  "async-trait",
+ "bytes",
  "cfg-if",
  "data-encoding",
  "enum-as-inner",
  "futures-channel",
+ "futures-io",
  "futures-util",
+ "h2",
+ "http",
  "idna",
  "ipnet",
  "once_cell",
  "rand 0.9.2",
+ "ring",
+ "rustls 0.23.35",
  "thiserror 2.0.17",
  "tinyvec",
+ "tokio",
+ "tokio-rustls 0.26.4",
  "tracing",
  "url",
+ "webpki-roots 0.26.11",
+]
+
+[[package]]
+name = "hickory-resolver"
+version = "0.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc62a9a99b0bfb44d2ab95a7208ac952d31060efc16241c87eaf36406fecf87a"
+dependencies = [
+ "cfg-if",
+ "futures-util",
+ "hickory-proto",
+ "moka",
+ "once_cell",
+ "parking_lot",
+ "rand 0.9.2",
+ "rustls 0.23.35",
+ "smallvec",
+ "thiserror 2.0.17",
+ "tokio",
+ "tokio-rustls 0.26.4",
+ "tracing",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -4218,6 +4251,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "moka"
+version = "0.12.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "957228ad12042ee839f93c8f257b62b4c0ab5eaae1d4fa60de53b27c9d7c5046"
+dependencies = [
+ "crossbeam-channel",
+ "crossbeam-epoch",
+ "crossbeam-utils",
+ "equivalent",
+ "parking_lot",
+ "portable-atomic",
+ "smallvec",
+ "tagptr",
+ "uuid",
+]
+
+[[package]]
 name = "muda"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4287,6 +4337,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
 dependencies = [
  "jni-sys 0.3.0",
+]
+
+[[package]]
+name = "netcfg"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hickory-resolver",
+ "log 0.4.28",
+ "reqwest 0.12.24",
+ "serde",
+ "sysproxy",
+ "tokio",
+ "url",
 ]
 
 [[package]]
@@ -5681,11 +5745,11 @@ dependencies = [
  "csv",
  "futures-util",
  "log 0.4.28",
+ "netcfg",
  "rand 0.9.2",
  "reqwest 0.12.24",
  "serde",
  "serde_json",
- "sysproxy",
  "tauri",
  "tokio",
 ]
@@ -6455,6 +6519,7 @@ version = "0.23.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "533f54bc6a7d4f647e46ad909549eda97bf5afc1585190ef692b4286b198bd8f"
 dependencies = [
+ "log 0.4.28",
  "once_cell",
  "ring",
  "rustls-pki-types",
@@ -7235,6 +7300,12 @@ dependencies = [
  "windows-sys 0.59.0",
  "winx",
 ]
+
+[[package]]
+name = "tagptr"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b2093cf4c8eb1e67749a6762251bc9cd836b6fc171623bd0a9d324d37af2417"
 
 [[package]]
 name = "tao"
