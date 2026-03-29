@@ -104,6 +104,14 @@
     />
 
     <repo
+        name="Rust module: netcfg"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-NetCfg"
+        path="src-tauri/modules/netcfg"
+        branch="main"
+        visibility="private"
+    />
+
+    <repo
         name="Tauri plugin: btclassic-spp"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-BtClassicSpp"
         path="src-tauri/plugins/btclassic-spp"
