@@ -128,6 +128,14 @@
     />
 
     <repo
+        name="Tauri plugin: android-widgets"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-AndroidWidgets"
+        path="src-tauri/plugins/android-widgets"
+        branch="main"
+        visibility="public"
+    />
+
+    <repo
         name="Frontend: WebUI"
         url="https://github.com/AstralSightStudios/AstroBox-NG-WebUI"
         path="web"

@@ -7,6 +7,7 @@ name = "AstroBox-ng"
 version = "2.0.0"
 dependencies = [
  "account",
+ "android-widgets",
  "anyhow",
  "base64 0.22.1",
  "block2 0.6.2",
@@ -207,6 +208,15 @@ name = "ambient-authority"
 version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9d4ee0d472d1cd2e28c97dfa124b3d8d992e10eb0a035f33f5d12e3a177ba3b"
+
+[[package]]
+name = "android-widgets"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+]
 
 [[package]]
 name = "android_log-sys"
