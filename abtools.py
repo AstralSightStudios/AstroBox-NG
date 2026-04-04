@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def eprint(*args, **kwargs):
@@ -271,6 +272,78 @@ def get_upstream_and_ahead(repo_path: Path) -> Tuple[Optional[str], Optional[int
 
     return upstream, ahead
 
+def ensure_full_fetch_refspec(repo_path: Path, verbose: bool = False) -> int:
+    desired = "+refs/heads/*:refs/remotes/origin/*"
+
+    rc, out = run_cmd(
+        ["git", "config", "--get-all", "remote.origin.fetch"],
+        cwd=repo_path,
+    )
+    existing = [line.strip() for line in out.splitlines() if line.strip()] if rc == 0 else []
+
+    if existing == [desired]:
+        return 0
+
+    rc, out = run_cmd(
+        ["git", "config", "--unset-all", "remote.origin.fetch"],
+        cwd=repo_path,
+    )
+    if rc != 0 and "No such section or key" not in out:
+        if verbose:
+            eprint(f"[fetch-config] unset remote.origin.fetch failed in {repo_path}:\n{out}")
+
+    rc, out = run_cmd(
+        ["git", "config", "--add", "remote.origin.fetch", desired],
+        cwd=repo_path,
+    )
+    if rc != 0:
+        eprint(f"[fetch-config] set remote.origin.fetch failed in {repo_path}:\n{out}")
+        return 1
+
+    if verbose:
+        print(f"[fetch-config] normalized remote.origin.fetch in {repo_path}")
+
+    return 0
+
+def ensure_branch_checked_out(repo_path: Path, branch: str) -> Tuple[int, str]:
+    rc, out = run_cmd(["git", "rev-parse", "--verify", branch], cwd=repo_path)
+    if rc == 0:
+        return run_cmd(["git", "checkout", branch], cwd=repo_path)
+
+    rc, out = run_cmd(
+        ["git", "show-ref", "--verify", f"refs/remotes/origin/{branch}"],
+        cwd=repo_path,
+    )
+    if rc == 0:
+        return run_cmd(
+            ["git", "checkout", "-B", branch, "--track", f"origin/{branch}"],
+            cwd=repo_path,
+        )
+
+    return 1, f"Remote branch origin/{branch} not found."
+
+def ensure_upstream_for_current_branch(repo_path: Path) -> Tuple[int, Optional[str], Optional[str]]:
+    rc, branch_out = run_cmd(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        cwd=repo_path,
+    )
+    if rc != 0:
+        return 1, None, branch_out
+
+    branch = branch_out.strip()
+    if not branch:
+        return 1, None, "Cannot determine current branch."
+
+    upstream, _ = get_upstream_and_ahead(repo_path)
+    if upstream:
+        return 0, branch, upstream
+
+    rc, out = run_cmd(["git", "push", "-u", "origin", branch], cwd=repo_path)
+    if rc != 0:
+        return rc, branch, out
+
+    return 0, branch, f"origin/{branch}"
+
 
 def ensure_commit_message(
     provided: Optional[str], repo_name: Optional[str] = None
@@ -409,6 +482,83 @@ def run_commit(
     return overall_rc
 
 
+def push_single_repo(entry: RepoEntry, verbose: bool) -> Tuple[int, str]:
+    lines: List[str] = []
+
+    if not entry.path.exists():
+        return 1, f"⚠️ Skipping {color_text(entry.name, 'yellow')}: path not found -> {entry.path}"
+
+    if not is_git_repo(entry.path):
+        return 1, (
+            f"⚠️ Skipping {color_text(entry.name, 'yellow')}: "
+            f"{entry.path} is not a git repository"
+        )
+
+    rc, status_out = run_cmd(["git", "status", "--short"], cwd=entry.path)
+    if rc != 0:
+        return 1, (
+            f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_out}"
+        )
+
+    if status_out.strip():
+        msg = (
+            f"⚠️ {color_text(entry.name, 'yellow')} still has uncommitted changes. Push skipped."
+        )
+        if verbose:
+            msg += "\n" + format_status_output(status_out)
+        return 1, msg
+
+    rc = ensure_full_fetch_refspec(entry.path, verbose=verbose)
+    if rc != 0:
+        return 1, f"❌ {color_text(entry.name, 'red')} failed to normalize fetch refspec."
+
+    rc, branch_out = run_cmd(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=entry.path
+    )
+    branch = branch_out.strip() if rc == 0 else "(unknown)"
+
+    upstream, ahead = get_upstream_and_ahead(entry.path)
+    if ahead is not None and ahead == 0:
+        if verbose:
+            target = upstream or "upstream"
+            return 0, (
+                f"ℹ️ {color_text(entry.name, 'gray')} already matches "
+                f"{color_text(target, 'cyan')}. Skipping push."
+            )
+        return 0, ""
+
+    if upstream is None:
+        rc, branch_name, result = ensure_upstream_for_current_branch(entry.path)
+        if rc != 0:
+            return 1, (
+                f"❌ {color_text(entry.name, 'red')} push failed "
+                f"(current branch {color_text(branch, 'yellow')}):\n{result}"
+            )
+        return 0, (
+            f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} "
+            f"({color_text(branch_name or branch, 'cyan')}) -> {color_text(result or 'origin', 'yellow')}."
+        )
+
+    rc, out = run_cmd(["git", "push"], cwd=entry.path)
+    if rc != 0:
+        return 1, (
+            f"❌ {color_text(entry.name, 'red')} push failed "
+            f"(current branch {color_text(branch, 'yellow')}):\n{out}"
+        )
+
+    if ahead is not None and upstream:
+        return 0, (
+            f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} "
+            f"({color_text(branch, 'cyan')}) -> {color_text(upstream, 'yellow')} "
+            f"({color_text(str(ahead), 'green')} commit{'s' if ahead != 1 else ''})."
+        )
+
+    return 0, (
+        f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} "
+        f"({color_text(branch, 'cyan')})."
+    )
+
+
 def run_push(xml_path: Path, verbose: bool) -> int:
     check_git_available()
 
@@ -419,71 +569,26 @@ def run_push(xml_path: Path, verbose: bool) -> int:
     entries.extend(collect_repo_entries(xml_path))
 
     overall_rc = 0
+    max_workers = min(8, max(1, (os.cpu_count() or 4)))
 
-    for entry in entries:
-        if not entry.path.exists():
-            overall_rc = 1
-            eprint(
-                f"⚠️ Skipping {color_text(entry.name, 'yellow')}: path not found -> {entry.path}"
-            )
-            continue
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(push_single_repo, entry, verbose) for entry in entries]
 
-        if not is_git_repo(entry.path):
-            overall_rc = 1
-            eprint(
-                f"⚠️ Skipping {color_text(entry.name, 'yellow')}: {entry.path} is not a git repository"
-            )
-            continue
+        for future in as_completed(futures):
+            try:
+                rc, text = future.result()
+            except KeyboardInterrupt:
+                eprint("\nPush interrupted.")
+                return 130
+            except Exception as ex:
+                overall_rc = 1
+                eprint(f"unexpected worker error: {ex}")
+                continue
 
-        rc, status_out = run_cmd(["git", "status", "--short"], cwd=entry.path)
-        if rc != 0:
-            overall_rc = 1
-            eprint(
-                f"⚠️ Unable to get status for {color_text(entry.name, 'yellow')}:\n{status_out}"
-            )
-            continue
-
-        if status_out.strip():
-            overall_rc = 1
-            eprint(
-                f"⚠️ {color_text(entry.name, 'yellow')} still has uncommitted changes. Push skipped."
-            )
-            if verbose:
-                print(format_status_output(status_out))
-            continue
-
-        rc, branch_out = run_cmd(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=entry.path
-        )
-        branch = branch_out.strip() if rc == 0 else "(unknown)"
-
-        upstream, ahead = get_upstream_and_ahead(entry.path)
-        if ahead is not None and ahead == 0:
-            if verbose:
-                target = upstream or "upstream"
-                print(
-                    f"ℹ️ {color_text(entry.name, 'gray')} already matches {color_text(target, 'cyan')}. Skipping push."
-                )
-            continue
-
-        rc, out = run_cmd(["git", "push"], cwd=entry.path)
-        if rc != 0:
-            overall_rc = 1
-            eprint(
-                f"❌ {color_text(entry.name, 'red')} push failed (current branch {color_text(branch, 'yellow')}):\n{out}"
-            )
-            continue
-
-        if ahead is not None and upstream:
-            print(
-                f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} "
-                f"({color_text(branch, 'cyan')}) -> {color_text(upstream, 'yellow')} "
-                f"({color_text(str(ahead), 'green')} commit{'s' if ahead != 1 else ''})."
-            )
-        else:
-            print(
-                f"🚀 {color_text('Pushed', 'green')} {color_text(entry.name, 'white')} ({color_text(branch, 'cyan')})."
-            )
+            if text:
+                print(text)
+            if rc != 0:
+                overall_rc = 1
 
     return overall_rc
 
@@ -812,7 +917,12 @@ def sync_root_repo(project_root: Path, verbose: bool = False) -> int:
         f"📦 Syncing Repo: Root repository ({current_branch}) ({remote_url}) (public)"
     )
 
-    rc, out = run_cmd(["git", "fetch", "--all", "--prune"], cwd=project_root)
+    rc = ensure_full_fetch_refspec(project_root, verbose=verbose)
+    if rc != 0:
+        eprint("[root] failed to normalize fetch refspec.")
+        return 1
+
+    rc, out = run_cmd(["git", "fetch", "origin", "--prune"], cwd=project_root)
     if rc != 0:
         eprint(f"[root] git fetch failed:\n{out}")
         return 1
@@ -851,10 +961,119 @@ def sync_root_repo(project_root: Path, verbose: bool = False) -> int:
     return 0
 
 
+def sync_single_repo(
+    project_root: Path,
+    repo: ET.Element,
+    include_private: bool,
+    verbose: bool = False,
+) -> Tuple[int, str]:
+    name = repo.get("name") or "(unnamed)"
+    url = repo.get("url")
+    path_attr = repo.get("path")
+    if not url or not path_attr:
+        return 1, f"Skip: {name}, missing url or path."
+
+    target = (project_root / path_attr).resolve()
+    branch = safe_branch(repo)
+    is_private = get_repo_priv_flag(repo)
+
+    if is_private and not include_private:
+        if verbose:
+            return 0, f"[skip private] {name} ({url}) -> {target}"
+        return 0, ""
+
+    if target == project_root:
+        if verbose:
+            return 0, f"[skip duplicate] {name} points to root repository which is already synced."
+        return 0, ""
+
+    lines: List[str] = []
+    lines.append(
+        f"📦 Syncing Repo: {name} ({branch}) ({url}) ({'private' if is_private else 'public'})"
+    )
+
+    try:
+        if target.exists() and is_git_repo(target):
+            old_head = get_head_commit(target)
+
+            rc = ensure_full_fetch_refspec(target, verbose=verbose)
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] failed to normalize fetch refspec."])
+
+            rc, out = run_cmd(["git", "fetch", "origin", "--prune"], cwd=target)
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] git fetch failed:\n{out}"])
+
+            rc, out = ensure_branch_checked_out(target, branch)
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] git checkout {branch} failed:\n{out}"])
+
+            rc, out = run_cmd(["git", "pull", "--ff-only", "origin", branch], cwd=target)
+            if rc != 0:
+                return 1, "\n".join(
+                    lines + [f"[{name}] git pull failed (conflict/manual fix needed?):\n{out}"]
+                )
+
+            new_head = get_head_commit(target)
+
+            if old_head and new_head and old_head != new_head:
+                short_from = old_head[:7]
+                short_to = new_head[:7]
+                lines.append(
+                    f"✅ {color_text(name, 'white')} "
+                    f"{color_text(short_from, 'cyan')} -> {color_text(short_to, 'cyan')}"
+                )
+
+                status_block, log_block = collect_pull_change_details(
+                    target, old_head, new_head
+                )
+
+                if status_block:
+                    lines.append(status_block)
+
+                if log_block:
+                    lines.append(color_text("📜 Commit log:", "gray"))
+                    for line in log_block.splitlines():
+                        lines.append(f"    {line}")
+
+                lines.append("")
+            elif verbose:
+                lines.append(f"😴 {color_text(name, 'gray')} already up to date.")
+
+        else:
+            ensure_dir(target)
+            rc, out = run_cmd(
+                [
+                    "git",
+                    "clone",
+                    "--branch",
+                    branch,
+                    url,
+                    str(target.parent / target.name),
+                ]
+            )
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] git clone failed:\n{out}"])
+
+            rc = ensure_full_fetch_refspec(target, verbose=verbose)
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] clone succeeded but fetch refspec normalization failed."])
+
+            rc, out = run_cmd(["git", "fetch", "origin", "--prune"], cwd=target)
+            if rc != 0:
+                return 1, "\n".join(lines + [f"[{name}] post-clone fetch failed:\n{out}"])
+
+            lines.append(f"✅ [{name}] Successfully cloned to {target}.")
+
+    except KeyboardInterrupt:
+        raise
+    except Exception as ex:
+        return 1, "\n".join(lines + [f"[{name}] unexpected error: {ex}"])
+
+    return 0, "\n".join(line for line in lines if line)
+
+
 def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> int:
-    """
-    （默认仅处理公开仓；加 --private 才处理私有仓）
-    """
     check_git_available()
     root = load_xml(xml_path)
 
@@ -870,111 +1089,36 @@ def sync_repos(xml_path: Path, include_private: bool, verbose: bool = False) -> 
         print("Note: no <repo> nodes found in XML.")
         return overall_rc
 
-    for repo in repos:
-        name = repo.get("name") or "(unnamed)"
-        url = repo.get("url")
-        path_attr = repo.get("path")
-        if not url or not path_attr:
-            eprint(f"Skip: {name}, missing url or path.")
-            overall_rc = overall_rc or 1
-            continue
+    max_workers = min(8, max(1, (os.cpu_count() or 4)))
+    futures = []
 
-        target = (project_root / path_attr).resolve()
-        branch = safe_branch(repo)
-        is_private = get_repo_priv_flag(repo)
-
-        if is_private and not include_private:
-            if verbose:
-                print(f"[skip private] {name} ({url}) -> {target}")
-            continue
-        if target == project_root:
-            if verbose:
-                print(
-                    f"[skip duplicate] {name} points to root repository which is already synced."
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for repo in repos:
+            futures.append(
+                executor.submit(
+                    sync_single_repo,
+                    project_root,
+                    repo,
+                    include_private,
+                    verbose,
                 )
-            continue
+            )
 
-        print(
-            f"📦 Syncing Repo: {name} ({branch}) ({url}) ({'private' if is_private else 'public'})"
-        )
+        for future in as_completed(futures):
+            try:
+                rc, text = future.result()
+            except KeyboardInterrupt:
+                eprint("\nOperation interrupted.")
+                return 130
+            except Exception as ex:
+                overall_rc = 1
+                eprint(f"unexpected worker error: {ex}")
+                continue
 
-        try:
-            if target.exists() and is_git_repo(target):
-                old_head = get_head_commit(target)
-
-                # fetch -> checkout -> pull (ff-only)
-                rc, out = run_cmd(["git", "fetch", "--all", "--prune"], cwd=target)
-                if rc != 0:
-                    overall_rc = 1
-                    eprint(f"[{name}] git fetch failed:\n{out}")
-                    continue
-
-                rc, out = run_cmd(["git", "checkout", branch], cwd=target)
-                if rc != 0:
-                    overall_rc = 1
-                    eprint(f"[{name}] git checkout {branch} failed:\n{out}")
-                    continue
-
-                rc, out = run_cmd(["git", "pull", "--ff-only"], cwd=target)
-                if rc != 0:
-                    overall_rc = 1
-                    eprint(
-                        f"[{name}] git pull failed (conflict/manual fix needed?):\n{out}"
-                    )
-                    continue
-
-                new_head = get_head_commit(target)
-
-                if old_head and new_head and old_head != new_head:
-                    short_from = old_head[:7]
-                    short_to = new_head[:7]
-                    print(
-                        f"✅ {color_text(name, 'white')} "
-                        f"{color_text(short_from, 'cyan')} -> {color_text(short_to, 'cyan')}"
-                    )
-
-                    status_block, log_block = collect_pull_change_details(
-                        target, old_head, new_head
-                    )
-
-                    if status_block:
-                        print(status_block)
-
-                    if log_block:
-                        print(color_text("📜 Commit log:", "gray"))
-                        for line in log_block.splitlines():
-                            print(f"    {line}")
-
-                    print("")
-                elif verbose:
-                    print(f"😴 {color_text(name, 'gray')} already up to date.")
-
-            else:
-                # Fresh clone
-                ensure_dir(target)
-                rc, out = run_cmd(
-                    [
-                        "git",
-                        "clone",
-                        "--branch",
-                        branch,
-                        "--single-branch",
-                        url,
-                        str(target.parent / target.name),
-                    ]
-                )
-                if rc != 0:
-                    overall_rc = 1
-                    eprint(f"[{name}] git clone failed:\n{out}")
-                    continue
-                print(f"✅ [{name}] Successfully cloned to {target}.")
-
-        except KeyboardInterrupt:
-            eprint("\nOperation interrupted.")
-            return 130
-        except Exception as ex:
-            overall_rc = 1
-            eprint(f"[{name}] unexpected error: {ex}")
+            if text:
+                print(text)
+            if rc != 0:
+                overall_rc = 1
 
     if include_private:
         try:
