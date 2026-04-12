@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="images/icon.png" alt="AstroBox 图标" width="64">
+    <img width="64" height="64" alt="AstroBox 图标" src="https://github.com/user-attachments/assets/26dc2938-afc9-4a09-8f19-ee675e36cfa5" />
 </p>
 <h1 align="center">AstroBox</h1>
 <p align="center">Rust 驱动的下一代可穿戴生态工具箱，聚焦第三方应用的安装、调试与分发。</p>
@@ -96,6 +96,11 @@ wasm-pack build src-tauri/modules/app_wasm --target web
 ### Tauri App
 ```shell
 python abtools.py dev --tauri
+```
+
+#### macOS DMG 构建
+```shell
+pnpm tauri:build:dmg
 ```
 
 ### WebAssembly Demo
