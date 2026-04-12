@@ -26,4 +26,4 @@ src-tauri/modules/app_wasm/pkg/
 
 target/*
 
-./AstroBox.dmg
+*.dmg

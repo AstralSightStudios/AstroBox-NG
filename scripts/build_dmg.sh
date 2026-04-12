@@ -11,7 +11,7 @@ APP_NAME="AstroBox"
 DMG_NAME="$APP_NAME.dmg"
 MOUNT_NAME="/Volumes/$APP_NAME"
 BACKGROUND="$(pwd)/src-tauri/modules/app/resources/dmgbg@2x.png"
-SRC="$ (pwd)/src-tauri/target/release/bundle/macos/$APP_NAME.app"
+SRC="$(pwd)/src-tauri/target/release/bundle/macos/$APP_NAME.app"
 
 # Remove old DMG outputs
 if ls *.dmg 1> /dev/null 2>&1; then
