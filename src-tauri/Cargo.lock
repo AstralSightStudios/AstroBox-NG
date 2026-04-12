@@ -10,6 +10,7 @@ dependencies = [
  "aes",
  "android-widgets",
  "anyhow",
+ "async-trait",
  "base64 0.22.1",
  "block2 0.6.2",
  "bluetooth",
@@ -63,9 +64,11 @@ dependencies = [
 name = "account"
 version = "0.1.0"
 dependencies = [
+ "aes",
  "anyhow",
  "async-trait",
  "base64 0.22.1",
+ "cbc",
  "cipher",
  "frontbridge",
  "log 0.4.28",
@@ -1162,6 +1165,15 @@ checksum = "374b7c592d9c00c1f4972ea58390ac6b18cbb6ab79011f3bdc90a0b82ca06b77"
 dependencies = [
  "serde",
  "toml 0.9.8",
+]
+
+[[package]]
+name = "cbc"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6"
+dependencies = [
+ "cipher",
 ]
 
 [[package]]
