@@ -9,7 +9,9 @@
     "preview": "rsbuild preview",
     "tauri": "node ./scripts/tauri-runner.mjs",
     "tauri:dev": "node ./scripts/tauri-runner.mjs dev",
-    "tauri:build": "node ./scripts/tauri-runner.mjs build"
+    "tauri:build": "node ./scripts/tauri-runner.mjs build",
+    "tauri:build:app": "pnpm tauri build --bundles app",
+    "tauri:build:dmg": "./scripts/build_dmg.sh"
   },
   "dependencies": {
     "@ctrl/tinycolor": "^4.2.0",

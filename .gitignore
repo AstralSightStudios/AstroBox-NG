@@ -25,3 +25,5 @@ __PRIV_CLONED
 src-tauri/modules/app_wasm/pkg/
 
 target/*
+
+./AstroBox.dmg
