@@ -28,6 +28,7 @@ dependencies = [
  "image-palette",
  "jni",
  "libc",
+ "libloading 0.8.9",
  "live-activity",
  "log 0.4.28",
  "netcfg",
