@@ -60,8 +60,8 @@ importers:
         specifier: ^12.23.24
         version: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       hyperos-bg:
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        specifier: ^0.1.2
+        version: 0.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       motion:
         specifier: ^12.23.24
         version: 12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -2235,8 +2235,8 @@ packages:
   html-url-attributes@3.0.1:
     resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
 
-  hyperos-bg@0.1.0:
-    resolution: {integrity: sha512-wEotNbox5jWQvOrovuSvSud78htVz8Wg2TvwufxpQevK1fS+i4aP7rKB2GC5+0ce8ZVqmQ3JGTZluue2tSL9JA==}
+  hyperos-bg@0.1.2:
+    resolution: {integrity: sha512-k+R1vwHQAe4r1zv4hT6EFXeXph2V/S2Zathh2fOD+vJFmFc/+OpDuYuVKDy+4wi79ZP+kdR9E6LPbMjf+0Cqag==}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
@@ -5230,7 +5230,7 @@ snapshots:
 
   html-url-attributes@3.0.1: {}
 
-  hyperos-bg@0.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  hyperos-bg@0.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
