@@ -112,6 +112,14 @@
     />
 
     <repo
+        name="Rust module: vivo_msgpack"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-Vivo-MsgPack"
+        path="src-tauri/modules/vivo_msgpack"
+        branch="main"
+        visibility="public"
+    />
+
+    <repo
         name="Tauri plugin: btclassic-spp"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-BtClassicSpp"
         path="src-tauri/plugins/btclassic-spp"
