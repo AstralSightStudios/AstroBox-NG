@@ -74,6 +74,7 @@ dependencies = [
  "base64 0.22.1",
  "cbc",
  "cipher",
+ "crc",
  "frontbridge",
  "log 0.4.28",
  "md-5",
