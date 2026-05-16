@@ -12,6 +12,7 @@ members = [
     "modules/privaccount",
     "modules/privprovider",
     "modules/provider",
+    "modules/vivo_msgpack",
     "plugins/android-widgets",
     "plugins/btclassic-spp",
     "plugins/live-activity",
