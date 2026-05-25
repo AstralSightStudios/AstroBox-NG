@@ -150,4 +150,12 @@
         branch="main"
         visibility="private"
     />
+
+    <repo
+        name="Demo: Apple Watch"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Demo-WatchOS"
+        path="demos/watchos"
+        branch="main"
+        visibility="public"
+    />
 </repos>
