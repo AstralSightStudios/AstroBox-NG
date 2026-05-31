@@ -32,6 +32,7 @@
     "embla-carousel-wheel-gestures": "^8.1.0",
     "figma-squircle": "^1.1.0",
     "framer-motion": "^12.23.24",
+    "harfbuzzjs": "^1.2.0",
     "hast-util-to-jsx-runtime": "^2.3.6",
     "hyperos-bg": "^0.1.2",
     "motion": "^12.23.24",
