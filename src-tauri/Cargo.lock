@@ -25,12 +25,12 @@ dependencies = [
  "futures-util",
  "hex",
  "image",
- "image-palette",
  "jni",
  "libc",
  "libloading 0.8.9",
  "live-activity",
  "log 0.4.28",
+ "mcu-material-color",
  "netcfg",
  "objc2 0.6.4",
  "objc2-app-kit",
@@ -3588,14 +3588,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "image-palette"
-version = "0.1.8"
-source = "git+https://github.com/leset0ng/image_palette?branch=main#df4a651b17a694385f615a2052dc35001274b877"
-dependencies = [
- "image",
-]
-
-[[package]]
 name = "image-webp"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4212,6 +4204,138 @@ checksum = "8ea1f30cedd69f0a2954655f7188c6a834246d2bcf1e315e2ac40c4b24dc9519"
 dependencies = [
  "cfg-if",
  "rayon",
+]
+
+[[package]]
+name = "mcu-blend"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "014b17c0bae83f8793d3abfcc640d6a760b700be09bdf57ea4e4eb097b50ab68"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-contrast"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6281e7861e82aaf4d4fd6bfa6ababbd90f74139779effe8584c6b3be54493efc"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-dislike"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41944ea6e940790b789cecc46c19bc08453662d8ea807743510b15721d66de60"
+dependencies = [
+ "mcu-hct",
+]
+
+[[package]]
+name = "mcu-dynamiccolor"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ad76639c35e3e088d14b8e8aa43477870914b4151f6cafbf18e442544c22d8d"
+dependencies = [
+ "mcu-contrast",
+ "mcu-dislike",
+ "mcu-hct",
+ "mcu-palettes",
+ "mcu-temperature",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-hct"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "adb9e8325dcd52c0449dfd8dbd3ce5e4d80a123b1fea578560684e08cc57f5f9"
+dependencies = [
+ "mcu-utils",
+ "once_cell",
+]
+
+[[package]]
+name = "mcu-material-color"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a669ffa65a22dbb18d495bee309e2827accb4112b3b7b406a7e5fd2b564f7186"
+dependencies = [
+ "mcu-blend",
+ "mcu-contrast",
+ "mcu-dislike",
+ "mcu-dynamiccolor",
+ "mcu-hct",
+ "mcu-palettes",
+ "mcu-quantize",
+ "mcu-scheme",
+ "mcu-score",
+ "mcu-temperature",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-palettes"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "615c6c4793e0bd7ad19965fbf5cc9b9e7e5c6233e817849892587e7f07e244ee"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-quantize"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1bc8d8f30a32cd1f58c3237952a8be94ad0cd8a5e109c5c6e29d6308f2adcf94"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-scheme"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ddf07c3c948aba11096c0a68e714d7c740ad72d7c69a33dabaa274e3556858b"
+dependencies = [
+ "mcu-dynamiccolor",
+ "mcu-hct",
+ "mcu-palettes",
+]
+
+[[package]]
+name = "mcu-score"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13088c80e1b00bd402002c6f03e2ebe3f0224ea21661bbbdc35ad7fd864820f3"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-temperature"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb26fd6731022668fc7c250630dfdf2976795518cba8ab6408d49a260fe0f890"
+dependencies = [
+ "mcu-hct",
+ "mcu-utils",
+]
+
+[[package]]
+name = "mcu-utils"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fe74042c366a4f80af8fb92f4c7c6c1386ed332c3c2bdd72fcc18d14fe10ffe"
+dependencies = [
+ "thiserror 1.0.69",
 ]
 
 [[package]]
