@@ -98,14 +98,18 @@ wasm-pack build src-tauri/modules/app_wasm --target web
 python abtools.py dev --tauri
 pnpm tauri dev
 ```
-
-#### macOS 构建
+#### 构建
 ```shell
-pnpm tauri:build:dmg
+pnpm tauri:release
 ```
+##### 快速构建
+```shell
+pnpm tauri:fastbuild
+```
+#### macOS 构建
 ##### 仅构建 App
 ```shell
-pnpm tauri:build:dmg
+pnpm tauri build
 ```
 
 ### WebAssembly Demo
