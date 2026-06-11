@@ -2,7 +2,7 @@
 
 set -e
 
-# pnpm tauri build --bundles app
+pnpm tauri build --bundles app
 
 cd "$(dirname "$0")/.."
 
