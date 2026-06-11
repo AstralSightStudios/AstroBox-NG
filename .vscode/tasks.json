@@ -7,46 +7,46 @@
     {
       "label": "ab sync",
       "type": "shell",
-      "command": "python abtools.py sync",
-      "problemMatcher": []
+      "command": "python3 abtools.py sync",
+      "problemMatcher": [],
     },
     {
       "label": "ab sync private",
       "type": "shell",
-      "command": "python abtools.py sync --private",
-      "problemMatcher": []
+      "command": "python3 abtools.py sync --private",
+      "problemMatcher": [],
     },
     {
       "label": "ab commit",
       "type": "shell",
-      "command": "python abtools.py commit",
-      "problemMatcher": []
+      "command": "python3 abtools.py commit",
+      "problemMatcher": [],
     },
     {
       "label": "ab push",
       "type": "shell",
       "problemMatcher": [],
-      "command": "python abtools.py push"
+      "command": "python3 abtools.py push",
     },
     {
       "label": "ab dev",
       "type": "shell",
       "problemMatcher": ["$rustc-watch"],
-      "command": "python abtools.py dev"
+      "command": "python3 abtools.py dev",
     },
     {
       "label": "ab dev tauri",
       "type": "shell",
-      "command": "python abtools.py dev --tauri",
+      "command": "python3 abtools.py dev --tauri",
       "problemMatcher": ["$rustc-watch"],
-      "isBackground": true
+      "isBackground": true,
     },
     {
       "label": "ab dev wasm",
       "type": "shell",
-      "command": "python abtools.py dev --wasm",
+      "command": "python3 abtools.py dev --wasm",
       "problemMatcher": ["$rustc-watch"],
-      "isBackground": true
-    }
-  ]
+      "isBackground": true,
+    },
+  ],
 }
