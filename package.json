@@ -26,6 +26,7 @@
     "@tauri-apps/plugin-os": "^2.3.2",
     "@types/hast": "^3.0.4",
     "axios": "^1.13.2",
+    "calligraph": "^1.4.1",
     "dayjs": "^1.11.19",
     "embla-carousel-react": "^8.6.0",
     "embla-carousel-wheel-gestures": "^8.1.0",
@@ -55,7 +56,6 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "@number-flow/react": "^0.5.10",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/themes": "^3.2.1",
     "@rsbuild/core": "^1.6.3",
