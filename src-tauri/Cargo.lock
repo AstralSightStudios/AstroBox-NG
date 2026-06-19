@@ -5861,9 +5861,11 @@ checksum = "95067976aca6421a523e491fce939a3e65249bac4b977adee0ee9771568e8aa3"
 name = "provider"
 version = "2.0.0"
 dependencies = [
+ "account",
  "anyhow",
  "arc-swap",
  "async-trait",
+ "base64 0.22.1",
  "csv",
  "futures-util",
  "log 0.4.28",
