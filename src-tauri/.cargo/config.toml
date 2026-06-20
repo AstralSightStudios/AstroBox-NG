@@ -5,6 +5,12 @@ rustflags = ["--cfg=web_sys_unstable_apis"]
 RUST_LIB_BACKTRACE = "1"
 RUST_BACKTRACE = "1"
 WASMTIME_BACKTRACE_DETAILS = "1"
+# Xcode 27 / iOS 27 SDK rejects deployment targets below 15.0. Xcode injects an
+# older IPHONEOS_DEPLOYMENT_TARGET (14.0) into the "Build Rust Code" script phase,
+# which tauri-utils forwards to swift-rs when cross-compiling tauri's Swift
+# package. Force a supported floor so the Swift build succeeds. (Ignored by
+# non-iOS targets; iOS app/widget targets keep their own higher targets.)
+IPHONEOS_DEPLOYMENT_TARGET = { value = "15.0", force = true }
 
 [target.wasm32-unknown-unknown]
 rustflags = ["--cfg=getrandom_backend=\"wasm_js\"", "--cfg=web_sys_unstable_apis"]
