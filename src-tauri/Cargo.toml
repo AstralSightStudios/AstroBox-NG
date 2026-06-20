@@ -28,17 +28,4 @@ default-members = [
 
 [patch.crates-io]
 rustix = { git = "https://github.com/66hh/rustix-android-patch", branch = "main" }
-
-[profile.fast-release]
-inherits = "release"
-codegen-units = 64
-incremental = true
-lto = false
-opt-level = 0
-debug = true
-strip = false
-
-[profile.debug-release]
-inherits = "fast-release"
-codegen-units = 1
-split-debuginfo = "unpacked"
+swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }
