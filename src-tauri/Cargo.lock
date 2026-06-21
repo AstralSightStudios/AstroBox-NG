@@ -8871,7 +8871,7 @@ dependencies = [
  "wasmtime-internal-math",
  "wasmtime-internal-slab",
  "wasmtime-internal-unwinder",
- "wasmtime-internal-versioned-export-macros",
+ "wasmtime-internal-versioned-export-macros 38.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmtime-internal-winch",
  "wat",
  "windows-sys 0.60.2",
@@ -8970,21 +8970,20 @@ dependencies = [
  "wasmtime-environ",
  "wasmtime-internal-math",
  "wasmtime-internal-unwinder",
- "wasmtime-internal-versioned-export-macros",
+ "wasmtime-internal-versioned-export-macros 38.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "wasmtime-internal-fiber"
 version = "38.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9308cdb17f8d51e3164185616d809e28c29a6515c03b9dd95c89436b71f6d154"
+source = "git+https://github.com/Searchstars/wasmtime?branch=astrobox-38.0.4-android-fiber-fix#4d70c12a65ae7f4bff69aa3051b8a9b6b5793d16"
 dependencies = [
  "anyhow",
  "cc",
  "cfg-if",
  "libc",
  "rustix 1.1.3",
- "wasmtime-internal-versioned-export-macros",
+ "wasmtime-internal-versioned-export-macros 38.0.4 (git+https://github.com/Searchstars/wasmtime?branch=astrobox-38.0.4-android-fiber-fix)",
  "windows-sys 0.60.2",
 ]
 
@@ -8997,7 +8996,7 @@ dependencies = [
  "cc",
  "object",
  "rustix 1.1.3",
- "wasmtime-internal-versioned-export-macros",
+ "wasmtime-internal-versioned-export-macros 38.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -9045,6 +9044,16 @@ name = "wasmtime-internal-versioned-export-macros"
 version = "38.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23e277f734b9256359b21517c3b0c26a2a9de6c53a51b670ae55cdcde548bf4e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "wasmtime-internal-versioned-export-macros"
+version = "38.0.4"
+source = "git+https://github.com/Searchstars/wasmtime?branch=astrobox-38.0.4-android-fiber-fix#4d70c12a65ae7f4bff69aa3051b8a9b6b5793d16"
 dependencies = [
  "proc-macro2",
  "quote",
