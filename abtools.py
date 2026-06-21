@@ -96,7 +96,8 @@ WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3"]
 
 RUSTIX_PATCH_LINES = [
     "[patch.crates-io]",
-    'rustix = { git = "https://github.com/66hh/rustix-android-patch", branch = "main" }',
+    'rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }',
+    'swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }',
     "",
 ]
 
