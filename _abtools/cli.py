@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 
 from . import ui
+from .commands import branch as branch_cmd
+from .commands import profile as profile_cmd
 from .commands.build import run_build
 from .commands.commit import run_commit
 from .commands.dev import run_dev
@@ -88,10 +90,83 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_push = subparsers.add_parser("push", help="Push root repo and all sub repos")
     _add_conflict_flags(p_push)
+
+    # profile
+    p_profile = subparsers.add_parser("profile", help="Manage & apply shared dev configs (repo→branch)")
+    psub = p_profile.add_subparsers(dest="profile_cmd")
+    psub.add_parser("list", help="List dev profiles")
+    p_show = psub.add_parser("show", help="Show one profile's overrides")
+    p_show.add_argument("name")
+    p_save = psub.add_parser("save", help="Save current branches (and/or --set) as a profile")
+    p_save.add_argument("name")
+    p_save.add_argument("--set", action="append", default=[], metavar="REPO=BRANCH", help="Add/override an entry")
+    p_save.add_argument("--no-from-current", dest="from_current", action="store_false", default=True,
+                        help="Don't snapshot current branches")
+    p_del = psub.add_parser("delete", help="Delete a profile")
+    p_del.add_argument("name")
+    p_apply = psub.add_parser("apply", help="Apply a profile (switch branches) and sync")
+    p_apply.add_argument("name")
+    p_apply.add_argument("--no-sync", dest="do_sync", action="store_false", default=True)
+    _add_conflict_flags(p_apply)
+    p_clear = psub.add_parser("clear", help="Deactivate profile, back to default branches")
+    p_clear.add_argument("--no-sync", dest="do_sync", action="store_false", default=True)
+    _add_conflict_flags(p_clear)
+    psub.add_parser("current", help="Show active profile and per-repo branch status")
+
+    # branch
+    p_branch = subparsers.add_parser("branch", help="Create/list branches across repos")
+    bsub = p_branch.add_subparsers(dest="branch_cmd")
+    p_bnew = bsub.add_parser("new", help="Create a branch in one repo (--repo) or all (--all)")
+    p_bnew.add_argument("name")
+    p_bnew.add_argument("--all", action="store_true", help="Create in every repo")
+    p_bnew.add_argument("--repo", help="Repo key/name for a single-repo branch")
+    p_bnew.add_argument("--base", help="Base branch (default: main for --all, else repo default)")
+    p_bnew.add_argument("--push", action="store_true", help="Also push -u to origin immediately")
+    bsub.add_parser("list", help="List the current branch of every repo")
+
     subparsers.add_parser("tui", help="Interactive dashboard + action launcher (curses)")
     subparsers.add_parser("help", help="Print command help")
 
     return parser
+
+
+def _dispatch_profile(args, xml_path: Path) -> int:
+    cmd = getattr(args, "profile_cmd", None)
+    if cmd == "list":
+        return profile_cmd.list_profiles(xml_path)
+    if cmd == "show":
+        return profile_cmd.show_profile(xml_path, args.name)
+    if cmd == "save":
+        return profile_cmd.save_profile(xml_path, args.name, args.set, args.from_current)
+    if cmd == "delete":
+        return profile_cmd.delete_profile(xml_path, args.name)
+    if cmd == "apply":
+        return profile_cmd.apply_profile(
+            xml_path, args.name, do_sync=args.do_sync, policy=args.prefer,
+            merge_mode=args.merge_mode, auto_lockfiles=args.auto_lockfiles, verbose=args.verbose,
+        )
+    if cmd == "clear":
+        return profile_cmd.clear_profile(
+            xml_path, do_sync=args.do_sync, policy=args.prefer,
+            merge_mode=args.merge_mode, auto_lockfiles=args.auto_lockfiles, verbose=args.verbose,
+        )
+    if cmd == "current":
+        return profile_cmd.current_profile(xml_path)
+    ui.err("Usage: python abtools.py profile {list|show|save|delete|apply|clear|current}")
+    return 2
+
+
+def _dispatch_branch(args, xml_path: Path) -> int:
+    cmd = getattr(args, "branch_cmd", None)
+    if cmd == "new":
+        return branch_cmd.branch_new(
+            xml_path, args.name, all_repos=args.all, repo=args.repo,
+            base=args.base, push=args.push, verbose=args.verbose,
+        )
+    if cmd == "list":
+        return branch_cmd.branch_list(xml_path)
+    ui.err("Usage: python abtools.py branch {new|list}")
+    return 2
 
 
 def print_help_and_exit(parser: argparse.ArgumentParser) -> None:
@@ -157,6 +232,12 @@ def main() -> None:
         )
         ui.out("✅ All tasks have been completed")
         sys.exit(rc)
+
+    elif args.command == "profile":
+        sys.exit(_dispatch_profile(args, xml_path))
+
+    elif args.command == "branch":
+        sys.exit(_dispatch_branch(args, xml_path))
 
     elif args.command == "tui":
         sys.exit(run_tui(xml_path, args.verbose))

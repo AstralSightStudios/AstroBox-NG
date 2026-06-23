@@ -19,8 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from .. import conflict, ui
-from ..config import get_repo_priv_flag, load_xml, safe_branch
+from .. import conflict, profiles, ui
+from ..config import WorkspaceRepo, list_workspace
 from ..gitutil import (
     collect_pull_change_details,
     ensure_branch_checked_out,
@@ -34,44 +34,22 @@ from ..shell import check_git_available, run_cmd
 
 
 @dataclass
-class SyncTarget:
-    name: str
-    path: Path
-    url: Optional[str]  # None for the root repo (never cloned)
-    branch: str
-    is_private: bool
-
-
-@dataclass
 class IntegrateJob:
-    target: SyncTarget
+    target: WorkspaceRepo
     old_head: Optional[str]
 
 
-def _build_targets(xml_path: Path, project_root: Path) -> List[SyncTarget]:
+def _build_targets(xml_path: Path, project_root: Path) -> List[WorkspaceRepo]:
     rc, branch_out = run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=project_root)
     root_branch = branch_out.strip() if rc == 0 else "main"
 
-    targets: List[SyncTarget] = [
-        SyncTarget("Root repository", project_root, None, root_branch, False)
-    ]
+    targets = list_workspace(xml_path, project_root, root_branch)
 
-    xml_root = load_xml(xml_path)
-    for repo in xml_root.findall("repo"):
-        name = repo.get("name") or "(unnamed)"
-        url = repo.get("url")
-        path_attr = repo.get("path")
-        if not url or not path_attr:
-            ui.err(f"Skip: {name}, missing url or path.")
-            continue
-        target = SyncTarget(
-            name=name,
-            path=(project_root / path_attr).resolve(),
-            url=url,
-            branch=safe_branch(repo),
-            is_private=get_repo_priv_flag(repo),
-        )
-        targets.append(target)
+    # The applied dev profile overrides default branches for sync targeting.
+    overrides = profiles.active_overrides(project_root)
+    if overrides:
+        for t in targets:
+            t.branch = overrides.get(t.key, t.branch)
     return targets
 
 
@@ -94,7 +72,7 @@ def _report_change(name: str, path: Path, old_head: Optional[str]) -> List[str]:
     return lines
 
 
-def _clone(target: SyncTarget) -> Tuple[int, str]:
+def _clone(target: WorkspaceRepo) -> Tuple[int, str]:
     lines = [
         f"📦 Cloning {target.name} ({target.branch}) ({target.url}) "
         f"({'private' if target.is_private else 'public'})"
@@ -114,7 +92,7 @@ def _clone(target: SyncTarget) -> Tuple[int, str]:
 
 
 def _prepare(
-    target: SyncTarget, include_private: bool, verbose: bool, project_root: Path
+    target: WorkspaceRepo, include_private: bool, verbose: bool, project_root: Path
 ) -> Tuple[int, str, Optional[IntegrateJob]]:
     """Parallel phase for one repo. May defer heavy integration to the serial phase."""
     if target.is_private and not include_private:

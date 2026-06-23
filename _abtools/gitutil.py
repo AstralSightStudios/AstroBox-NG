@@ -99,6 +99,47 @@ def ensure_branch_checked_out(repo_path: Path, branch: str) -> Tuple[int, str]:
     return 1, f"Remote branch origin/{branch} not found."
 
 
+def current_branch(repo_path: Path) -> str:
+    rc, out = run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=repo_path)
+    return out.strip() if rc == 0 else "(unknown)"
+
+
+def local_branch_exists(repo_path: Path, name: str) -> bool:
+    rc, _ = run_cmd(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"], cwd=repo_path)
+    return rc == 0
+
+
+def remote_branch_exists(repo_path: Path, name: str) -> bool:
+    rc, _ = run_cmd(
+        ["git", "show-ref", "--verify", "--quiet", f"refs/remotes/origin/{name}"], cwd=repo_path
+    )
+    return rc == 0
+
+
+def checkout_or_create_branch(repo_path: Path, name: str, base: str) -> Tuple[int, str]:
+    """Switch to ``name``, creating it from ``base`` (or origin/base) if needed.
+
+    Resolution order: existing local branch → existing origin branch (tracked) →
+    create new from local ``base`` → create new from ``origin/base``.
+    """
+    if local_branch_exists(repo_path, name):
+        return run_cmd(["git", "checkout", name], cwd=repo_path)
+
+    if remote_branch_exists(repo_path, name):
+        return run_cmd(
+            ["git", "checkout", "-B", name, "--track", f"origin/{name}"], cwd=repo_path
+        )
+
+    if local_branch_exists(repo_path, base):
+        base_ref = base
+    elif remote_branch_exists(repo_path, base):
+        base_ref = f"origin/{base}"
+    else:
+        return 1, f"base branch '{base}' not found (locally or on origin)."
+
+    return run_cmd(["git", "checkout", "-b", name, base_ref], cwd=repo_path)
+
+
 def ensure_upstream_for_current_branch(
     repo_path: Path,
 ) -> Tuple[int, Optional[str], Optional[str]]:

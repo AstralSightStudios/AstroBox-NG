@@ -20,7 +20,7 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from . import ui
 
@@ -41,6 +41,51 @@ class RepoEntry:
     name: str
     path: Path
     is_private: bool
+
+
+# Stable key for the root repo inside dev profiles.
+ROOT_KEY = "."
+
+
+@dataclass
+class WorkspaceRepo:
+    name: str
+    path: Path
+    key: str  # ROOT_KEY for the root repo, otherwise the repos.xml ``path``
+    url: Optional[str]  # None for the root repo (never cloned)
+    branch: str  # default branch from repos.xml (or the root's current branch)
+    is_private: bool
+
+
+def list_workspace(
+    xml_path: Path, project_root: Path, root_branch: str
+) -> List["WorkspaceRepo"]:
+    """The root repo plus every <repo> in repos.xml, as a uniform list.
+
+    ``root_branch`` is passed in (callers know it via git) so this stays pure XML.
+    """
+    repos: List[WorkspaceRepo] = [
+        WorkspaceRepo("Root repository", project_root, ROOT_KEY, None, root_branch, False)
+    ]
+    xml_root = load_xml(xml_path)
+    for repo in xml_root.findall("repo"):
+        url = repo.get("url")
+        path_attr = repo.get("path")
+        name = repo.get("name") or (path_attr or "(unnamed)")
+        if not url or not path_attr:
+            ui.err(f"Skip: {name}, missing url or path.")
+            continue
+        repos.append(
+            WorkspaceRepo(
+                name=name,
+                path=(project_root / path_attr).resolve(),
+                key=path_attr,
+                url=url,
+                branch=safe_branch(repo),
+                is_private=get_repo_priv_flag(repo),
+            )
+        )
+    return repos
 
 
 def _toml_array(items: List[str]) -> str:
