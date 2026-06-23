@@ -3,6 +3,10 @@
 *.local
 *.log*
 
+# Python (abtools)
+__pycache__/
+*.py[cod]
+
 # Dist
 node_modules
 dist/

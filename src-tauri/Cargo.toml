@@ -1,30 +1,12 @@
 [workspace]
 members = [
-    "modules/account",
-    "modules/app",
-    "modules/app_wasm",
-    "modules/bluetooth",
-    "modules/core",
-    "modules/frontbridge",
-    "modules/netcfg",
-    "modules/pb",
-    "modules/pluginsystem",
-    "modules/privaccount",
-    "modules/privprovider",
-    "modules/provider",
-    "modules/vivo_msgpack",
-    "plugins/android-widgets",
-    "plugins/btclassic-spp",
-    "plugins/live-activity",
+    "modules/*",
+    "plugins/*",
 ]
 exclude = [
     "modules/app_esp32s3",
 ]
 resolver = "3"
-
-default-members = [
-    "modules/app",
-]
 
 [patch.crates-io]
 rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }
