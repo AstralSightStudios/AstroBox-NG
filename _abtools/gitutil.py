@@ -104,6 +104,20 @@ def current_branch(repo_path: Path) -> str:
     return out.strip() if rc == 0 else "(unknown)"
 
 
+def default_branch(repo_path: Path, fallback: str = "main") -> str:
+    """The repo's canonical default branch (origin's HEAD), e.g. 'main'.
+
+    Used for the root repo, which has no repos.xml entry — so its default can't
+    be read from config and must come from the remote.
+    """
+    rc, out = run_cmd(
+        ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=repo_path
+    )
+    if rc == 0 and out.strip():
+        return out.strip().split("/", 1)[-1]
+    return fallback
+
+
 def local_branch_exists(repo_path: Path, name: str) -> bool:
     rc, _ = run_cmd(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"], cwd=repo_path)
     return rc == 0

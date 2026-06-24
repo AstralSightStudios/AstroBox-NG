@@ -18,6 +18,7 @@ from ..config import WorkspaceRepo, list_workspace
 from ..gitutil import (
     checkout_or_create_branch,
     current_branch,
+    default_branch,
     ensure_full_fetch_refspec,
     is_git_repo,
 )
@@ -26,9 +27,7 @@ from ..shell import check_git_available, run_cmd
 
 def _targets(xml_path: Path) -> Tuple[Path, List[WorkspaceRepo]]:
     root = xml_path.parent.resolve()
-    rc, out = run_cmd(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root)
-    root_branch = out.strip() if rc == 0 else "main"
-    return root, list_workspace(xml_path, root, root_branch)
+    return root, list_workspace(xml_path, root, default_branch(root))
 
 
 def _present(t: WorkspaceRepo) -> bool:

@@ -17,11 +17,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Optional
 
-from .. import ui
+from .. import profiles, ui
 from ..config import RepoEntry, collect_repo_entries
 from ..gitutil import get_upstream_and_ahead, is_git_repo
 from ..shell import check_git_available, run_cmd
 
+from . import branch as branch_cmd
+from . import profile as profile_cmd
 from .build import run_build
 from .commit import run_commit
 from .dev import run_dev
@@ -94,6 +96,69 @@ def _ask_yes_no(prompt: str, default: bool = False) -> bool:
     return answer in ("y", "yes")
 
 
+def _profiles_menu(xml_path: Path, verbose: bool) -> int:
+    root = xml_path.parent.resolve()
+    catalog = profiles.load_all(root)
+    active = profiles.get_active(root)
+    names = sorted(catalog)
+
+    ui.out(ui.color("Dev profiles:", "cyan"))
+    if names:
+        for i, name in enumerate(names, 1):
+            mark = ui.color("  ● active", "green") if name == active else ""
+            ui.out(f"  {i}. {ui.color(name, 'white')}  [{len(catalog[name])} override(s)]{mark}")
+    else:
+        ui.out("  (none yet)")
+    ui.out("Commands:  <number> apply  ·  c clear  ·  s <name> save-current  ·  d <name> delete  ·  q cancel")
+
+    try:
+        raw = input("[✨ABTools] profile > ").strip()
+    except (EOFError, KeyboardInterrupt):
+        return 0
+    if not raw or raw.lower() == "q":
+        return 0
+    if raw.lower() == "c":
+        return profile_cmd.clear_profile(
+            xml_path, do_sync=True, policy="interactive", merge_mode="rebase",
+            auto_lockfiles=True, verbose=verbose,
+        )
+    if raw.lower().startswith("s ") and raw[2:].strip():
+        return profile_cmd.save_profile(xml_path, raw[2:].strip(), [], True)
+    if raw.lower().startswith("d ") and raw[2:].strip():
+        return profile_cmd.delete_profile(xml_path, raw[2:].strip())
+    if raw.isdigit() and 1 <= int(raw) <= len(names):
+        return profile_cmd.apply_profile(
+            xml_path, names[int(raw) - 1], do_sync=True, policy="interactive",
+            merge_mode="rebase", auto_lockfiles=True, verbose=verbose,
+        )
+    ui.out("Unrecognized input.")
+    return 0
+
+
+def _branch_menu(xml_path: Path, verbose: bool) -> int:
+    try:
+        name = input("[✨ABTools] New branch name: ").strip()
+        if not name:
+            ui.out("Cancelled.")
+            return 0
+        scope = input("[✨ABTools] Scope — [a]ll repos / [r]single repo > ").strip().lower()
+        if scope.startswith("a"):
+            base = input("[✨ABTools] Base branch [main]: ").strip() or "main"
+            return branch_cmd.branch_new(
+                xml_path, name, all_repos=True, repo=None, base=base, push=False, verbose=verbose
+            )
+        if scope.startswith("r"):
+            repo = input("[✨ABTools] Repo key/name: ").strip()
+            base = input("[✨ABTools] Base branch [repo default]: ").strip() or None
+            return branch_cmd.branch_new(
+                xml_path, name, all_repos=False, repo=repo, base=base, push=False, verbose=verbose
+            )
+    except (EOFError, KeyboardInterrupt):
+        return 0
+    ui.out("Cancelled.")
+    return 0
+
+
 def _build_actions(xml_path: Path, verbose: bool) -> List[Action]:
     def _init() -> int:
         private = _ask_yes_no("[✨ABTools] Include private repos?", default=True)
@@ -114,6 +179,8 @@ def _build_actions(xml_path: Path, verbose: bool) -> List[Action]:
         Action("S", "Sync (incl. private)", lambda: run_sync(xml_path, True, verbose)),
         Action("c", "Commit  (opens $EDITOR)", lambda: run_commit(xml_path, None, verbose)),
         Action("p", "Push", lambda: run_push(xml_path, verbose)),
+        Action("P", "Profiles…", lambda: _profiles_menu(xml_path, verbose)),
+        Action("n", "New branch…", lambda: _branch_menu(xml_path, verbose)),
         Action("d", "Dev — Tauri app", lambda: run_dev(xml_path, verbose, True, False)),
         Action("w", "Dev — Web / WASM", lambda: run_dev(xml_path, verbose, False, True)),
         Action("i", "Init  (sync + deps)", _init),
@@ -216,7 +283,7 @@ def _header_box(win, w: int, summary) -> None:
         sx = _add(win, 1, sx, text, attr)
 
 
-def _draw(stdscr, statuses, actions, sel, repo_scroll, message) -> int:
+def _draw(stdscr, statuses, actions, sel, repo_scroll, message, active=None) -> int:
     import curses
 
     stdscr.erase()
@@ -225,6 +292,8 @@ def _draw(stdscr, statuses, actions, sel, repo_scroll, message) -> int:
     dirty = sum(1 for s in statuses if s.is_repo and s.changes)
     missing = sum(1 for s in statuses if not s.exists)
     summary = [
+        (f"profile: {active or '—'}", _cp(4) | curses.A_BOLD if active else curses.A_DIM),
+        ("  ·  ", curses.A_DIM),
         (f"{len(statuses)} repos", curses.A_DIM),
         ("  ·  ", curses.A_DIM),
         (f"{dirty} dirty", _cp(3) | curses.A_BOLD if dirty else _cp(2)),
@@ -313,16 +382,18 @@ def _main_loop(stdscr, xml_path: Path, verbose: bool) -> None:
     stdscr.keypad(True)
     _init_colors()
 
+    root = xml_path.parent.resolve()
     actions = _build_actions(xml_path, verbose)
     sel = 0
     repo_scroll = 0
-    message = "Scanning repositories…"
-    repo_scroll = _draw(stdscr, [], actions, sel, repo_scroll, message)
+    active = profiles.get_active(root)
+    repo_scroll = _draw(stdscr, [], actions, sel, repo_scroll, "Scanning repositories…", active)
     statuses = _scan(xml_path)
     message = None
 
     while True:
-        repo_scroll = _draw(stdscr, statuses, actions, sel, repo_scroll, message)
+        active = profiles.get_active(root)
+        repo_scroll = _draw(stdscr, statuses, actions, sel, repo_scroll, message, active)
         message = None
         ch = stdscr.getch()
 
@@ -337,7 +408,7 @@ def _main_loop(stdscr, xml_path: Path, verbose: bool) -> None:
         elif ch == curses.KEY_PPAGE:
             repo_scroll -= 5
         elif ch in (ord("r"), ord("R")):
-            _draw(stdscr, statuses, actions, sel, repo_scroll, "Scanning repositories…")
+            _draw(stdscr, statuses, actions, sel, repo_scroll, "Scanning repositories…", active)
             statuses = _scan(xml_path)
         elif ch in (curses.KEY_ENTER, 10, 13):
             rc = _suspend_and_run(stdscr, actions[sel].run)
