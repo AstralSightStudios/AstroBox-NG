@@ -34,3 +34,4 @@ src-tauri/modules/app_wasm/pkg/
 target/*
 
 *.dmg
+scripts/archpkg/

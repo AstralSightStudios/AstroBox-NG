@@ -158,4 +158,12 @@
         branch="main"
         visibility="public"
     />
+
+    <repo
+        name="Packaging: Arch Linux"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Pkg-ArchLinux"
+        path="scripts/archpkg"
+        branch="main"
+        visibility="public"
+    />
 </repos>
