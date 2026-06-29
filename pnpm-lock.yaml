@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@claralight-design/smooth-capsule':
+        specifier: ^0.1.1
+        version: 0.1.1(react@19.2.0)
       '@ctrl/tinycolor':
         specifier: ^4.2.0
         version: 4.2.0
@@ -262,6 +265,11 @@ packages:
   '@babel/types@7.28.5':
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
+
+  '@claralight-design/smooth-capsule@0.1.1':
+    resolution: {integrity: sha512-3qWua1kUaC0khVU1LFnNkp4Kuls6SYESCfw8Holq5ybA6v//WAPDOwirga3mOLh/kWbwDkRf1/80R6iW0o6/MA==}
+    peerDependencies:
+      react: '>=18'
 
   '@csstools/cascade-layer-name-parser@2.0.5':
     resolution: {integrity: sha512-p1ko5eHgV+MgXFVa4STPKpvPxr6ReS8oS2jzTukjR74i5zJNyWO1ZM1m8YKBXnzDKWfBN1ztLYlHxbVemDD88A==}
@@ -3243,6 +3251,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@claralight-design/smooth-capsule@0.1.1(react@19.2.0)':
+    dependencies:
+      react: 19.2.0
 
   '@csstools/cascade-layer-name-parser@2.0.5(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
     dependencies:
