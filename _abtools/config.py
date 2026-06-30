@@ -33,6 +33,7 @@ PATCH_CRATES = [
     'rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }',
     'swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }',
     'wasmtime-internal-fiber = { git = "https://github.com/Searchstars/wasmtime", branch = "astrobox-38.0.4-android-fiber-fix" }',
+    'tao = { git = "https://github.com/Searchstars/tao", branch = "fix/ios-scene-configuration-lifetime" }',
 ]
 
 
