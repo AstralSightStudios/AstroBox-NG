@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "profiles": {
+    "ios-appstore-publish": {
+      "src-tauri/modules/app": "ios-appstore",
+      "web": "ios-review"
+    }
+  }
+}
