@@ -7485,8 +7485,7 @@ checksum = "7b2093cf4c8eb1e67749a6762251bc9cd836b6fc171623bd0a9d324d37af2417"
 [[package]]
 name = "tao"
 version = "0.35.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1c93047acf68669466a34690ac58cca7010bd1b201e1ec86f1fd0a75d3dd4a9"
+source = "git+https://github.com/Searchstars/tao?branch=fix/ios-scene-configuration-lifetime#112081883beaa648194422d2fb40d16538812549"
 dependencies = [
  "bitflags 2.10.0",
  "block2 0.6.2",
@@ -7513,7 +7512,7 @@ dependencies = [
  "parking_lot",
  "percent-encoding",
  "raw-window-handle",
- "tao-macros",
+ "tao-macros 0.1.3 (git+https://github.com/Searchstars/tao?branch=fix/ios-scene-configuration-lifetime)",
  "unicode-segmentation",
  "url",
  "windows 0.61.3",
@@ -7527,6 +7526,16 @@ name = "tao-macros"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4e16beb8b2ac17db28eab8bca40e62dbfbb34c0fcdc6d9826b11b7b5d047dfd"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "tao-macros"
+version = "0.1.3"
+source = "git+https://github.com/Searchstars/tao?branch=fix/ios-scene-configuration-lifetime#112081883beaa648194422d2fb40d16538812549"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -10336,7 +10345,7 @@ dependencies = [
  "raw-window-handle",
  "sha2",
  "soup3",
- "tao-macros",
+ "tao-macros 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror 2.0.17",
  "url",
  "webkit2gtk",
