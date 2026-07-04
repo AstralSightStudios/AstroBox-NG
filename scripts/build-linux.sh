@@ -69,6 +69,9 @@ repackage_rpm() {
         esac
     done
 
+    local file_list
+    file_list=$(cd "$content_dir" && find . -type f | sed 's|^\.||')
+
     cat > "$spec_file" << EOF
 Name: astrobox-ng
 Version: $version
@@ -85,7 +88,7 @@ mkdir -p %{buildroot}
 cp -a $content_dir/* %{buildroot}/
 
 %files
-/*
+$file_list
 EOF
 
     mkdir -p "$build_dir/rpmbuild"/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
