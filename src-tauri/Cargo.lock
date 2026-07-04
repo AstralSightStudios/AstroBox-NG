@@ -26,6 +26,7 @@ dependencies = [
  "frontbridge",
  "futures-util",
  "hex",
+ "iap",
  "image",
  "jni",
  "libc",
@@ -3483,6 +3484,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "iap"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
