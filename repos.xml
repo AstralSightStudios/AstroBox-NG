@@ -144,6 +144,14 @@
     />
 
     <repo
+        name="Tauri plugin: cloud-push"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-CloudPush"
+        path="src-tauri/plugins/cloud-push"
+        branch="main"
+        visibility="public"
+    />
+
+    <repo
         name="Tauri plugin: iap"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-InAppPurchase"
         path="src-tauri/plugins/iap"
