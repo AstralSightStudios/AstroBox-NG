@@ -28,6 +28,7 @@ dependencies = [
  "hex",
  "iap",
  "image",
+ "inappbrowser",
  "jni",
  "libc",
  "libloading 0.8.9",
@@ -3695,6 +3696,16 @@ name = "imgref"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7c5cedc30da3a610cac6b4ba17597bdf7152cf974e8aab3afb3d54455e371c8"
+
+[[package]]
+name = "inappbrowser"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
 
 [[package]]
 name = "indexmap"

@@ -152,6 +152,14 @@
     />
 
     <repo
+        name="Tauri plugin: inappbrowser"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Plugin-InAppBrowser"
+        path="src-tauri/plugins/inappbrowser"
+        branch="main"
+        visibility="public"
+    />
+
+    <repo
         name="Frontend: WebUI"
         url="https://github.com/AstralSightStudios/AstroBox-NG-WebUI"
         path="web"
