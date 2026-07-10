@@ -34,7 +34,44 @@
 5. 具有抽象IPC层的由Rsbuild + React构建的现代化Web前端
 
 ## 实机效果
-暂未解禁
+
+<p align="center">
+    <a href="images/screenshot_home.png">
+        <img width="23%" src="images/screenshot_home.png" alt="AstroBox 首页">
+    </a>
+    <a href="images/screenshot_resources.png">
+        <img width="23%" src="images/screenshot_resources.png" alt="AstroBox 资源社区">
+    </a>
+    <a href="images/screenshot_device.png">
+        <img width="23%" src="images/screenshot_device.png" alt="AstroBox 设备管理">
+    </a>
+    <a href="images/screenshot_settings.png">
+        <img width="23%" src="images/screenshot_settings.png" alt="AstroBox 设置">
+    </a>
+</p>
+
+## 下载
+
+<p align="center">
+    <a href="https://apps.apple.com/us/app/astrobox-wearable-toolkit/id6785374105">
+        <img
+            height="54"
+            alt="在 App Store 下载"
+            src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/zh-cn?size=250x83"
+        >
+    </a>
+    &nbsp;
+    <a href="https://github.com/AstralSightStudios/AstroBox-NG/releases">
+        <img
+            height="54"
+            alt="从 GitHub Releases 下载"
+            src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20Android-GitHub%20Releases-24292f?style=for-the-badge&logo=github&logoColor=white"
+        >
+    </a>
+</p>
+
+## 项目架构
+基于团队自行开发的多仓管理工具 [ABTools](./abtools) 进行多仓库开发，其中部分仓库开源，部分闭源。
 
 ## 开源协议 / License
 此项目以AGPL 3.0授权，但包含额外条款。
@@ -71,48 +108,16 @@ python abtools.py init
 python abtools.py init --private
 ```
 
-## 日常开发命令
+## 开发
 
 > 在执行任何编译操作前，请确保 Rust 工具链满足最低版本要求。
-
-### Web UI（需要对应仓库访问权限）
-```shell
-pnpm run dev
-```
 
 ### CoreLib
 ```shell
 cargo test -p corelib --manifest-path src-tauri/Cargo.toml
 ```
 
-### WASM（浏览器端）
-```shell
-# 初次使用需安装 wasm-pack
-cargo install wasm-pack
-
-wasm-pack build src-tauri/modules/app_wasm --target web
-```
-
-### Tauri App
+### Tauri App（闭源）
 ```shell
 python abtools.py dev --tauri
-pnpm tauri dev
-```
-#### 构建
-```shell
-pnpm tauri:release
-```
-##### 快速构建
-```shell
-pnpm tauri:fastbuild
-```
-#### macOS 构建
-##### 仅构建 App
-```shell
-pnpm tauri build
-```
-
-### WebAssembly Demo
-```shell
-python abtools.py dev --wasm
 ```
