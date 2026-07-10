@@ -2,8 +2,11 @@
   "version": 1,
   "profiles": {
     "ios-appstore-publish": {
-      "src-tauri/modules/app": "ios-appstore",
-      "web": "ios-review"
+      "src-tauri/modules/app": "ios-appstore"
+    },
+    "2.0.2rel": {
+      "src-tauri/modules/app": "r202",
+      "web": "r202"
     }
   }
 }
