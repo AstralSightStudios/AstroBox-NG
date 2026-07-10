@@ -60,7 +60,7 @@
             src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/zh-cn?size=250x83"
         >
     </a>
-    &nbsp;
+    <br/>
     <a href="https://github.com/AstralSightStudios/AstroBox-NG/releases">
         <img
             height="54"
