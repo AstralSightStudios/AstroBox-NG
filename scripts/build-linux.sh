@@ -186,7 +186,6 @@ show_menu() {
     echo -e "  ${BOLD}1)${NC} deb      - Debian/Ubuntu 包"
     echo -e "  ${BOLD}2)${NC} rpm      - Fedora/RHEL 包"
     echo -e "  ${BOLD}3)${NC} arch     - Arch Linux 包 (prebuilt，快速)"
-    echo -e "  ${BOLD}4)${NC} arch-full - Arch Linux 包 (从源码完整编译)"
     echo ""
     echo -e "  ${BOLD}a)${NC} 全部构建 (deb + rpm)"
     echo -e "  ${BOLD}q)${NC} 退出"
@@ -221,7 +220,6 @@ prompt_selection() {
                 1|deb)       selected+=("deb") ;;
                 2|rpm)       selected+=("rpm") ;;
                 3|arch)      selected+=("arch") ;;
-                4|arch-full) selected+=("arch-full") ;;
                 a|A)         selected=("deb" "rpm") ;;
                 *)
                     err "无效选项: $token"
@@ -257,7 +255,7 @@ check_deps() {
         command -v rpm2archive >/dev/null 2>&1 || missing+=("rpm2archive")
     fi
 
-    if [[ " ${SELECTED_TARGETS[*]} " =~ " arch " || " ${SELECTED_TARGETS[*]} " =~ " arch-full " ]]; then
+    if [[ " ${SELECTED_TARGETS[*]} " =~ " arch " ]]; then
         command -v makepkg >/dev/null 2>&1 || missing+=("makepkg")
     fi
 
@@ -326,8 +324,13 @@ build_deb() {
 
     mkdir -p "$OUTPUT_DIR"
     while IFS= read -r f; do
-        cp "$f" "$OUTPUT_DIR/"
-        ok "$OUTPUT_DIR/$(basename "$f")"
+        local base version arch out_name
+        base=$(basename "$f")
+        version=$(echo "$base" | grep -oP '\d+\.\d+\.\d+')
+        arch=$(echo "$base" | grep -oP 'amd64|arm64|armhf')
+        out_name="AstroBox-${version}_${arch}.deb"
+        cp "$f" "$OUTPUT_DIR/$out_name"
+        ok "$OUTPUT_DIR/$out_name"
     done <<< "$deb_files"
 }
 
@@ -345,8 +348,13 @@ build_rpm() {
 
     mkdir -p "$OUTPUT_DIR"
     while IFS= read -r f; do
-        cp "$f" "$OUTPUT_DIR/"
-        ok "$OUTPUT_DIR/$(basename "$f")"
+        local base version arch out_name
+        base=$(basename "$f")
+        version=$(echo "$base" | grep -oP '\d+\.\d+\.\d+')
+        arch=$(echo "$base" | grep -oP 'x86_64|aarch64|armv7hl')
+        out_name="AstroBox-${version}_${arch}.rpm"
+        cp "$f" "$OUTPUT_DIR/$out_name"
+        ok "$OUTPUT_DIR/$out_name"
     done <<< "$rpm_files"
 }
 
@@ -359,11 +367,17 @@ build_arch() {
 
     mkdir -p "$OUTPUT_DIR"
     local arch_pkgs
-    arch_pkgs=$(find "$SCRIPT_DIR/archpkg" -maxdepth 1 -name "astrobox-ng-*.pkg.tar.zst" -type f 2>/dev/null)
+    arch_pkgs=$(find "$SCRIPT_DIR/archpkg" -maxdepth 1 -name "astrobox-ng-*.pkg.tar.zst" ! -name "*debug*" -type f 2>/dev/null)
     if [ -n "$arch_pkgs" ]; then
         while IFS= read -r f; do
-            cp "$f" "$OUTPUT_DIR/"
-            ok "$OUTPUT_DIR/$(basename "$f")"
+            local base version pkgrel arch out_name
+            base=$(basename "$f")
+            version=$(echo "$base" | grep -oP '\d+\.\d+\.\d+')
+            pkgrel=$(echo "$base" | grep -oP '\d+\.\d+\.\d+-\K\d+')
+            arch=$(echo "$base" | grep -oP 'x86_64|aarch64|armv7hl|any')
+            out_name="AstroBox-${version}-${pkgrel}_${arch}.pkg.tar.zst"
+            cp "$f" "$OUTPUT_DIR/$out_name"
+            ok "$OUTPUT_DIR/$out_name"
         done <<< "$arch_pkgs"
     fi
 }
@@ -397,7 +411,6 @@ step_build
 for target in "${SELECTED_TARGETS[@]}"; do
     case "$target" in
         arch)      build_arch prebuilt ;;
-        arch-full) build_arch full ;;
     esac
     done
 
