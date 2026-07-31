@@ -39,6 +39,7 @@
     "motion": "^12.23.24",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-fast-marquee": "^1.6.5",
     "react-photo-view": "^1.2.7",
     "react-progressive-blur": "^1.0.6",
     "reactflow": "^11.11.4",
