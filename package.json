@@ -25,6 +25,7 @@
     "@tauri-apps/plugin-haptics": "^2.3.2",
     "@tauri-apps/plugin-opener": "^2.5.4",
     "@tauri-apps/plugin-os": "^2.3.2",
+    "@tauri-apps/plugin-window-state": "^2.4.1",
     "@types/hast": "^3.0.4",
     "axios": "^1.13.2",
     "calligraph": "^1.4.1",
