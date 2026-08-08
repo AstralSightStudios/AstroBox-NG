@@ -20,6 +20,9 @@ importers:
       '@dnd-kit/react':
         specifier: ^0.1.21
         version: 0.1.21(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@material/material-color-utilities':
+        specifier: ^0.4.0
+        version: 0.4.0
       '@tauri-apps/api':
         specifier: ^2.11.1
         version: 2.11.1
@@ -620,6 +623,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@material/material-color-utilities@0.4.0':
+    resolution: {integrity: sha512-dlq6VExJReb8dhjj3a/yTigr3ncNwoFmL5Iy2ENtbDX03EmNeOEdZ+vsaGrj7RTuO+mB7L58II4LCsl4NpM8uw==}
 
   '@module-federation/error-codes@0.21.2':
     resolution: {integrity: sha512-mGbPAAApgjmQUl4J7WAt20aV04a26TyS21GDEpOGXFEQG5FqmZnSJ6FqB8K19HgTKioBT1+fF/Ctl5bGGao/EA==}
@@ -3656,6 +3662,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@material/material-color-utilities@0.4.0': {}
 
   '@module-federation/error-codes@0.21.2': {}
 
