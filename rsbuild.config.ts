@@ -38,6 +38,37 @@ export default defineConfig({
   html: {
     title: "AstroBox",
     favicon: "./web/favicon.svg",
+    tags: [
+      {
+        tag: "style",
+        children: `
+html { background: #000; }
+html[data-startup-theme]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: #000;
+  opacity: 1;
+  border-radius: var(--window-radius, 0);
+  pointer-events: none;
+  transition: opacity 350ms ease;
+}
+html[data-startup-theme].startup-theme-ready::after {
+  opacity: 0;
+}
+`,
+        head: true,
+        append: false,
+      },
+      {
+        tag: "script",
+        children:
+          'document.documentElement.setAttribute("data-startup-theme", "")',
+        head: true,
+        append: false,
+      },
+    ],
     meta: {
       referrer: "no-referrer",
       viewport:
