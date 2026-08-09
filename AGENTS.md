@@ -7,6 +7,14 @@
 ## 项目结构
 本项目使用tauri框架，但切分成了多个独立、互不干扰的crate，这使得项目的核心功能能够被轻松且快速地移植到任何设备上。`src-tauri`目录下是一个cargo workspace，包含了许多`modules`和`plugins`。modules是项目功能被切成的多个crate，包括`app`（Tauri程序主入口项目）、`bluetooth`（调用`btclassic-spp`的平台无关蓝牙转接层）、`core`（平台无关的项目能力核心实现，基于ECS架构）、`pb`（平台无关的项目依赖的Protobuf类型）等。plugins则是基于tauri v2框架编写的插件，包括`btclassic-spp`（跨平台经典蓝牙SPP协议实现）、`live-activity`（支持iOS、macOS、Windows的实时活动通知实现）等。
 
+## 多仓库结构与 repos.xml
+本项目是**嵌套独立 git 仓库**（非 submodule，无 `.gitmodules`）：`src-tauri/modules/*`、`src-tauri/plugins/*`、`web` 等目录各自是独立 git 仓库，主仓库 `git status` 看不到其内部改动。`repos.xml` 是聚合清单（`name`/`url`/`path`/`branch`/`visibility`），由 `_abtools`（CLI 名 `abtools`）解析，`sync`/`commit`/`push`/`branch`/`profile` 等命令均以它为准；**新增模块/插件必须先登记进 repos.xml**。
+
+关键影响：
+- 改子仓库内代码须**在子仓库内单独 add/commit/push**；不要在主仓库 `git add` 子仓库内部文件。
+- `abtools sync` 批量 clone/fetch/快进，分叉或脏工作区则智能合并；默认跳过 private 仓库（`--include-private` 才拉取）。
+- 根 `.gitignore` 忽略了 `src-tauri/modules/*`、`web` 等（恰好是子仓库），尊重 .gitignore 的搜索工具（grep/find）在根目录**搜不到子仓库内容**，搜不到不代表没有，须显式指定子仓库路径搜索。
+
 ## 代码规范
 用户在请求你编写任何功能时，应该先思考这个功能应该放到哪里。如果涉及对设备的操作，那你应该写进core里作为一个LogicComponent，并使用Component本身做数据存取，然后再在app开个接口供前端调用。如果这个功能涉及大量第三方接入、核心无关的内容，你应该寻找当前有什么crate适合放置这些代码，如果没有，也可以酌情考虑创建新的crate。对于core，它是基于ECS框架构建的，因此你应该全力开发ECS框架的用途，在想创建任何全局变量之前，应该思考这个全局变量放进Component里当成一个属性是不是会更合适，是不是能省略更多锁的调用；多个组件的属性重合了，那是不是应该单独开一个Component (非LogicComponent) 来存放这些重复的数据？设备相关的高全局性数据是不是应该直接放到Entity上？这些都是你应该思考的。
 
