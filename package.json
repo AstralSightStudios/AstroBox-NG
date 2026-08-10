@@ -6,6 +6,7 @@
   "scripts": {
     "build": "rsbuild build",
     "dev": "rsbuild dev",
+    "generate:phosphor-link-icons": "node ./scripts/generate-phosphor-link-icons.mjs",
     "preview": "rsbuild preview",
     "tauri": "node ./scripts/tauri-runner.mjs",
     "tauri:dev": "node ./scripts/tauri-runner.mjs dev",
