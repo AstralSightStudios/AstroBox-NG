@@ -11,6 +11,9 @@ importers:
       '@claralight-design/smooth-capsule':
         specifier: ^0.1.1
         version: 0.1.1(react@19.2.0)
+      '@claralight-design/wallpaper-engine':
+        specifier: ^0.1.2
+        version: 0.1.2(react@19.2.0)
       '@ctrl/tinycolor':
         specifier: ^4.2.0
         version: 4.2.0
@@ -276,6 +279,14 @@ packages:
     resolution: {integrity: sha512-3qWua1kUaC0khVU1LFnNkp4Kuls6SYESCfw8Holq5ybA6v//WAPDOwirga3mOLh/kWbwDkRf1/80R6iW0o6/MA==}
     peerDependencies:
       react: '>=18'
+
+  '@claralight-design/wallpaper-engine@0.1.2':
+    resolution: {integrity: sha512-GKLSW90pCLylmeBrB0acMPtJv4tPvDaiZBqhMhBeWgFyNJsmRCJnS1VJF0I7TyUZpEMNU/9LP2RbcBjY0jJ9vw==}
+    peerDependencies:
+      react: '>=18 <20'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@csstools/cascade-layer-name-parser@2.0.5':
     resolution: {integrity: sha512-p1ko5eHgV+MgXFVa4STPKpvPxr6ReS8oS2jzTukjR74i5zJNyWO1ZM1m8YKBXnzDKWfBN1ztLYlHxbVemDD88A==}
@@ -3272,6 +3283,10 @@ snapshots:
 
   '@claralight-design/smooth-capsule@0.1.1(react@19.2.0)':
     dependencies:
+      react: 19.2.0
+
+  '@claralight-design/wallpaper-engine@0.1.2(react@19.2.0)':
+    optionalDependencies:
       react: 19.2.0
 
   '@csstools/cascade-layer-name-parser@2.0.5(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@claralight-design/smooth-capsule": "^0.1.1",
+    "@claralight-design/wallpaper-engine": "^0.1.2",
     "@ctrl/tinycolor": "^4.2.0",
     "@dnd-kit/helpers": "^0.1.21",
     "@dnd-kit/react": "^0.1.21",
