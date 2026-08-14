@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@claralight-design/smooth-capsule':
-        specifier: ^0.1.1
-        version: 0.1.1(react@19.2.0)
+        specifier: ^2.0.0
+        version: 2.0.0(react@19.2.0)
       '@claralight-design/wallpaper-engine':
         specifier: ^0.1.2
         version: 0.1.2(react@19.2.0)
@@ -26,6 +26,9 @@ importers:
       '@lesetong/cardstack':
         specifier: ^0.2.1
         version: 0.2.1(motion@13.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@lisse/core':
+        specifier: ^0.6.3
+        version: 0.6.3
       '@tauri-apps/api':
         specifier: ^2.11.1
         version: 2.11.1
@@ -71,9 +74,6 @@ importers:
       embla-carousel-wheel-gestures:
         specifier: ^8.1.0
         version: 8.1.0(embla-carousel@8.6.0)
-      figma-squircle:
-        specifier: ^1.1.0
-        version: 1.1.0
       harfbuzzjs:
         specifier: ^1.2.0
         version: 1.2.0
@@ -275,8 +275,8 @@ packages:
     resolution: {integrity: sha512-qQ5m48eI/MFLQ5PxQj4PFaprjyCTLI37ElWMmNs0K8Lk3dVeOdNpB3ks8jc7yM5CDmVC73eMVk/trk3fgmrUpA==}
     engines: {node: '>=6.9.0'}
 
-  '@claralight-design/smooth-capsule@0.1.1':
-    resolution: {integrity: sha512-3qWua1kUaC0khVU1LFnNkp4Kuls6SYESCfw8Holq5ybA6v//WAPDOwirga3mOLh/kWbwDkRf1/80R6iW0o6/MA==}
+  '@claralight-design/smooth-capsule@2.0.0':
+    resolution: {integrity: sha512-wbfhQeGDLf8a6a66Rg2uNOpozhgmY0IEvXW+7vlTW+Ve9KBUI5QOtkzoqAjl99Hn3aGaxS9lXVZQHtgWvngT4A==}
     peerDependencies:
       react: '>=18'
 
@@ -638,6 +638,10 @@ packages:
       motion: ^13.0.0
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
+
+  '@lisse/core@0.6.3':
+    resolution: {integrity: sha512-7xQFrqBqZgqRjBwiGG8JsbuMSlpQzTgqVAns6R41ZsLAG12pLAku04g7yvhUpT8/BF1jj1Mtx51Us7r8zoPChw==}
+    engines: {node: '>=18'}
 
   '@module-federation/error-codes@0.21.2':
     resolution: {integrity: sha512-mGbPAAApgjmQUl4J7WAt20aV04a26TyS21GDEpOGXFEQG5FqmZnSJ6FqB8K19HgTKioBT1+fF/Ctl5bGGao/EA==}
@@ -2235,9 +2239,6 @@ packages:
   fault@2.0.1:
     resolution: {integrity: sha512-WtySTkS4OKev5JtpHXnib4Gxiurzh5NCGvWrFaZ34m6JehfTUhKZvn9njTfw48t6JumVQOmrKqpmGcdwxnhqBQ==}
 
-  figma-squircle@1.1.0:
-    resolution: {integrity: sha512-3aa6bOurrsybsuYo1TMRuasBpXgVjgnmOUtZ40il6e1dJF2lhTRq89z7oy1uzKDspbH3630rLZD2UvJqXDiktA==}
-
   follow-redirects@1.15.11:
     resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
     engines: {node: '>=4.0'}
@@ -3281,8 +3282,9 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@claralight-design/smooth-capsule@0.1.1(react@19.2.0)':
+  '@claralight-design/smooth-capsule@2.0.0(react@19.2.0)':
     dependencies:
+      '@lisse/core': 0.6.3
       react: 19.2.0
 
   '@claralight-design/wallpaper-engine@0.1.2(react@19.2.0)':
@@ -3680,6 +3682,8 @@ snapshots:
       motion: 13.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
+
+  '@lisse/core@0.6.3': {}
 
   '@module-federation/error-codes@0.21.2': {}
 
@@ -5334,8 +5338,6 @@ snapshots:
   fault@2.0.1:
     dependencies:
       format: 0.2.2
-
-  figma-squircle@1.1.0: {}
 
   follow-redirects@1.15.11: {}
 
