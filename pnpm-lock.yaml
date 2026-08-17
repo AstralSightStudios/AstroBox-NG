@@ -12,8 +12,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(react@19.2.0)
       '@claralight-design/wallpaper-engine':
-        specifier: ^0.1.2
-        version: 0.1.2(react@19.2.0)
+        specifier: ^0.2.4
+        version: 0.2.4(react@19.2.0)
       '@ctrl/tinycolor':
         specifier: ^4.2.0
         version: 4.2.0
@@ -292,8 +292,8 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@claralight-design/wallpaper-engine@0.1.2':
-    resolution: {integrity: sha512-GKLSW90pCLylmeBrB0acMPtJv4tPvDaiZBqhMhBeWgFyNJsmRCJnS1VJF0I7TyUZpEMNU/9LP2RbcBjY0jJ9vw==}
+  '@claralight-design/wallpaper-engine@0.2.4':
+    resolution: {integrity: sha512-s4B9l1eDbY0LZbZQaKYBY1Os26TKp2kEgR+Or/sKSC4ikhuBeDcDo32enZUBIzG32bSmGQLlOvQTKO46pj8y8A==}
     peerDependencies:
       react: '>=18 <20'
     peerDependenciesMeta:
@@ -2970,6 +2970,9 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
+  pako@3.0.1:
+    resolution: {integrity: sha512-GupotUUI0mlhugKjUs4bjOwLt3nrehy9Ys2dxC0GtgVef5cnKggkDMmf2bq2poCCuVXopWPmqsc9VDT2iJUy+w==}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -3593,7 +3596,9 @@ snapshots:
       '@lisse/core': 0.6.3
       react: 19.2.0
 
-  '@claralight-design/wallpaper-engine@0.1.2(react@19.2.0)':
+  '@claralight-design/wallpaper-engine@0.2.4(react@19.2.0)':
+    dependencies:
+      pako: 3.0.1
     optionalDependencies:
       react: 19.2.0
 
@@ -6546,6 +6551,8 @@ snapshots:
   nth-check@2.1.1:
     dependencies:
       boolbase: 1.0.0
+
+  pako@3.0.1: {}
 
   parent-module@1.0.1:
     dependencies:
