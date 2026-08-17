@@ -21,6 +21,7 @@ dependencies = [
  "chrono-tz",
  "cloud-push",
  "corelib",
+ "csv",
  "dispatch",
  "ecb",
  "ed25519-dalek",
