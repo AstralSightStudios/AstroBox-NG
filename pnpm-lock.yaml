@@ -17,6 +17,9 @@ importers:
       '@ctrl/tinycolor':
         specifier: ^4.2.0
         version: 4.2.0
+      '@dnd-kit/dom':
+        specifier: ^0.1.21
+        version: 0.1.21
       '@dnd-kit/helpers':
         specifier: ^0.1.21
         version: 0.1.21
