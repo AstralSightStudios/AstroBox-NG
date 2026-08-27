@@ -18,6 +18,17 @@
 ## 代码规范
 用户在请求你编写任何功能时，应该先思考这个功能应该放到哪里。如果涉及对设备的操作，那你应该写进core里作为一个LogicComponent，并使用Component本身做数据存取，然后再在app开个接口供前端调用。如果这个功能涉及大量第三方接入、核心无关的内容，你应该寻找当前有什么crate适合放置这些代码，如果没有，也可以酌情考虑创建新的crate。对于core，它是基于ECS框架构建的，因此你应该全力开发ECS框架的用途，在想创建任何全局变量之前，应该思考这个全局变量放进Component里当成一个属性是不是会更合适，是不是能省略更多锁的调用；多个组件的属性重合了，那是不是应该单独开一个Component (非LogicComponent) 来存放这些重复的数据？设备相关的高全局性数据是不是应该直接放到Entity上？这些都是你应该思考的。
 
+### 前端全局状态：只用一种约定
+前端的全局状态一律走 `web/src/logic/store.ts` 的 `createStore` / `useStore` / `useStoreSelector`，**不要再手搓 `new Set<() => void>()` + 快照变量 + notify 那一套**（历史上有 19 个模块各写了一遍，四种订阅约定并存，每加一个状态就重踩一次同样的坑）。要点：
+
+- 外部事件源（`matchMedia`、window 事件、Tauri 事件、`localStorage`）放进 `createStore` 的 `onActive` 里绑定，它只在第一个订阅者到来时执行、最后一个订阅者离开时清理。**不要在每个消费组件的 `useEffect` 里各挂一份监听**。
+- 组件只关心快照里的某个标量时用 `useStoreSelector`，返回原始值让 React 按值比较；返回新对象会让每次通知都变成重渲染。
+- Context 的 `value`、以及被多处消费的 hook 的返回值，**必须 memo**。行内对象字面量会让 provider 每次重渲染都把全部消费者标脏（`useI18n` 有 115 个消费者，`useRouter` 有 62 个）。
+- 高频状态（手势进度、滚动进度这类每帧更新的量）不要放进 Context，放 store，参考 `web/src/router/router.gesture.ts`。
+
+### 前端保活与不可见路由
+六个路由基底的栈全部常驻挂载。**任何周期性工作都必须知道自己是否可见**：轮询走 `useInvoke`（已接 `RouteActiveContext`，非当前路由自动停），`setInterval`、`requestAnimationFrame` 循环、`IntersectionObserver` 同理，需要时用 `useIsActiveRoute()` 自行门控。不要新增常驻定时器。
+
 ## 编译测试
 由于项目使用了Tauri框架，该框架极度依赖各种GUI库，如果直接尝试编译整个项目，你自带的Agent环境可能无法完成该操作——就算能完成，那也一定会造成大量的耗时。因此，如果你仅对`core`做了修改，那你可以只使用类似`cargo test -p corelib --manifest-path src-tauri/Cargo.toml`这样的命令来测试编译。如果用户要求你对`wasm`进行修改，请使用`wasm-pack build src-tauri/modules/app_wasm --target web`进行编译测试。对于前端，请不要执行任何代码来进行Lint相关操作，只应直接尝试build一遍以检查是否存在TypeScript语法错误，如果有就修改，如果没有就直接当做修改完成+测试通过。
 
