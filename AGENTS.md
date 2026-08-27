@@ -26,6 +26,20 @@
 - Context 的 `value`、以及被多处消费的 hook 的返回值，**必须 memo**。行内对象字面量会让 provider 每次重渲染都把全部消费者标脏（`useI18n` 有 115 个消费者，`useRouter` 有 62 个）。
 - 高频状态（手势进度、滚动进度这类每帧更新的量）不要放进 Context，放 store，参考 `web/src/router/router.gesture.ts`。
 
+### 前端 CSS：层叠层（@layer）是硬约定
+样式优先级由**层**决定，不由特异性决定。层序声明在 `web/src/tailwind.css` 顶部（另有一份兜底写在 `rsbuild.config.ts` 注入的 `<head>` 内联 `<style>` 里，两处必须一致）：
+
+```
+@layer properties, app, theme, base, radix-themes, components, utilities;
+```
+
+- 项目自己的每一份 CSS（含 `node_modules` 里被 import 的三方 CSS）都由 `scripts/postcss-app-layer.mjs` 自动包进最低的 `app` 层，**不用也不要手写 `@layer app`**。
+- 因此项目 CSS 恒定垫在 Radix / Tailwind 底下：想压过它们，要么用 `!important`，要么把那几条规则显式写进更高的层，例如 `@layer base { … }`（`styles/theme.css` 和 `pages/oobe/index.module.css` 就是这么做的，插件会放它们过去）。
+- `tailwind.css` 自身是**无层**的，压过所有层，是唯一的例外，插件按路径跳过它。
+- `properties` 是 Tailwind 自己发的层，必须留在声明里；漏掉它会被当成新层追加到末尾变成最高，把 `--tw-*` 全部清零（Safari 上一定命中）。
+- 第三方库运行时注入的 `<style>`（sonner / vaul / react-fast-marquee / react-colorful / dnd-kit）是无层的，会压过所有层，所以由 `web/src/logic/vendorStyleLayer.ts` 在运行时补进 `app` 层。它必须是 `index.tsx` 的第一个 import。
+- **不要再写 `:not(#\#)` 堆特异性**：那是 cascade-layers polyfill 时代的写法，polyfill 已经关掉（`postcss.config.js` 里的 `features: { "cascade-layers": false }`），现在写它只是徒增特异性。
+
 ### 前端保活与不可见路由
 六个路由基底的栈全部常驻挂载。**任何周期性工作都必须知道自己是否可见**：轮询走 `useInvoke`（已接 `RouteActiveContext`，非当前路由自动停），`setInterval`、`requestAnimationFrame` 循环、`IntersectionObserver` 同理，需要时用 `useIsActiveRoute()` 自行门控。不要新增常驻定时器。
 

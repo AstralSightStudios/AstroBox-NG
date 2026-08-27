@@ -42,6 +42,10 @@ export default defineConfig({
       {
         tag: "style",
         children: `
+/* 层叠层顺序兜底：层序由「层名第一次被解析到的先后」决定，这份内联样式
+   在所有样式表之前解析，保证 app 无论如何都排在最低。权威声明在
+   web/src/tailwind.css 顶部，两处必须一致。 */
+@layer properties, app, theme, base, radix-themes, components, utilities;
 html { background: #000; }
 html[data-startup-theme]::after {
   content: "";
