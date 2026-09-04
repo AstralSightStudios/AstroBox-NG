@@ -43,6 +43,16 @@
 ### 前端保活与不可见路由
 六个路由基底的栈全部常驻挂载。**任何周期性工作都必须知道自己是否可见**：轮询走 `useInvoke`（已接 `RouteActiveContext`，非当前路由自动停），`setInterval`、`requestAnimationFrame` 循环、`IntersectionObserver` 同理，需要时用 `useIsActiveRoute()` 自行门控。不要新增常驻定时器。
 
+栈里距栈顶超过一层的卡片会被打上 `content-visibility: hidden`（`router/RouteCard.tsx`），整棵子树没有布局盒。任何在挂载后靠读布局定尺寸的代码都要能容忍读到 0，且在重新露出来时自愈——ResizeObserver 会再触发一次，参考 `components/reslist/VirtualItemGrid.tsx` 里 `offsetWidth === 0` 的守卫。
+
+### 前端渲染性能：三条踩过的红线
+- **静止态不要留 `transform`。** `translate3d(0,0,0)` 会把元素永久提升成合成层；全视口的 TabLayer / RouteCard 一张就是十几 MB 显存。动画一律用 `settleAtRest()` 收尾，它会 `stop()` 掉 filling 的动画再把 `transform` 复位成 `none`（顺序不能反：filling 的动画在层叠上压过内联样式）。
+- **逐帧只改 `transform` / `opacity`。** `border-radius`、`box-shadow`、`background`、`filter` 一改就要重绘，全视口元素上一次带模糊的阴影重绘在中低端 Android 上就是毫秒级。返回手势里这些属性被量化到 16 档，只在跨档时写一次（`RouteCard.tsx` 的 `PAINT_PROGRESS_STEPS`）。
+- **`backdrop-filter` 按「屏上同时有几个」算账，不是按模糊半径。** 每一个都是一张独立合成面，外层一有 transform 动画就要逐帧重算。小控件上的模糊（开关、徽标）基本看不出效果，别加。
+
+### 前端页面滚动容器
+移动端（`isAndroidRuntimeUserAgent() || isIosRuntimeUserAgent()`）的路由页面用原生 `.route-page-scroller`，桌面端才用 Radix `ScrollArea`，分支在 `router/RouteCard.tsx` 的 `RoutePageContent`。两条路径下页面拿到的 `scrollRef` 都指向**真正滚动的那个元素**（Radix 的 ref 也是指向 viewport），页面代码不要区分。改动 `.route-page-scroller` 的几何时对着 `.rt-ScrollAreaViewport` 那几条 App.css 规则核对：`.page-with-bottom-space` 一直是 `height: auto`，别给它 `flex-grow`。
+
 ## 编译测试
 由于项目使用了Tauri框架，该框架极度依赖各种GUI库，如果直接尝试编译整个项目，你自带的Agent环境可能无法完成该操作——就算能完成，那也一定会造成大量的耗时。因此，如果你仅对`core`做了修改，那你可以只使用类似`cargo test -p corelib --manifest-path src-tauri/Cargo.toml`这样的命令来测试编译。如果用户要求你对`wasm`进行修改，请使用`wasm-pack build src-tauri/modules/app_wasm --target web`进行编译测试。对于前端，请不要执行任何代码来进行Lint相关操作，只应直接尝试build一遍以检查是否存在TypeScript语法错误，如果有就修改，如果没有就直接当做修改完成+测试通过。
 
