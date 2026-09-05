@@ -49,6 +49,8 @@
 - **静止态不要留 `transform`。** `translate3d(0,0,0)` 会把元素永久提升成合成层；全视口的 TabLayer / RouteCard 一张就是十几 MB 显存。动画一律用 `settleAtRest()` 收尾，它会 `stop()` 掉 filling 的动画再把 `transform` 复位成 `none`（顺序不能反：filling 的动画在层叠上压过内联样式）。
 - **逐帧只改 `transform` / `opacity`。** `border-radius`、`box-shadow`、`background`、`filter` 一改就要重绘，全视口元素上一次带模糊的阴影重绘在中低端 Android 上就是毫秒级。返回手势里这些属性被量化到 16 档，只在跨档时写一次（`RouteCard.tsx` 的 `PAINT_PROGRESS_STEPS`）。
 - **`backdrop-filter` 按「屏上同时有几个」算账，不是按模糊半径。** 每一个都是一张独立合成面，外层一有 transform 动画就要逐帧重算。小控件上的模糊（开关、徽标）基本看不出效果，别加。
+- **会在列表里大量出现的组件，不要各自 `new ResizeObserver` / `new IntersectionObserver`**，走 `web/src/logic/sharedObservers.ts` 的 `observeResize` / `observeVisibility`。一张资源卡里就有 3 个 Squircle ＋ 5 个 AutoScrollText，虚拟化之后同时挂二十几张；共用一个 observer 实例，跨 C++/JS 边界的回调次数从上百降到 1。单例组件（页面级、hook 级）用不用都行。
+- **`infinite` 的 CSS 动画必须知道自己在不在视口里。** 跑马灯这类东西配上 `will-change: transform` 就是一条常驻合成层，滚出屏幕也照跑。用 `observeVisibility` 门控，不可见就 `animation-play-state: paused` 并把 `will-change` 撤掉（`AutoScrollText` 是范例）。
 
 ### 前端字体：MiSans 是切过片的
 全局字体栈是 `-apple-system, "SF Pro", "PingFang SC", "Geist", Inter, MiSans`，字体回退是**逐字形**的：iOS / macOS 上汉字命中系统的 PingFang SC，MiSans 一次都走不到；Android 上前面几个全部落空（PingFang 是苹果独有），Geist 只有拉丁字母，于是**每一个汉字都落到 MiSans**——那是个 11.87 MB 的整包。
