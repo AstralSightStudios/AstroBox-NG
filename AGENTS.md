@@ -50,6 +50,11 @@
 - **逐帧只改 `transform` / `opacity`。** `border-radius`、`box-shadow`、`background`、`filter` 一改就要重绘，全视口元素上一次带模糊的阴影重绘在中低端 Android 上就是毫秒级。返回手势里这些属性被量化到 16 档，只在跨档时写一次（`RouteCard.tsx` 的 `PAINT_PROGRESS_STEPS`）。
 - **`backdrop-filter` 按「屏上同时有几个」算账，不是按模糊半径。** 每一个都是一张独立合成面，外层一有 transform 动画就要逐帧重算。小控件上的模糊（开关、徽标）基本看不出效果，别加。
 
+### 前端字体：MiSans 是切过片的
+全局字体栈是 `-apple-system, "SF Pro", "PingFang SC", "Geist", Inter, MiSans`，字体回退是**逐字形**的：iOS / macOS 上汉字命中系统的 PingFang SC，MiSans 一次都走不到；Android 上前面几个全部落空（PingFang 是苹果独有），Geist 只有拉丁字母，于是**每一个汉字都落到 MiSans**——那是个 11.87 MB 的整包。
+
+所以 MiSans 的 `@font-face` 不在 `App.css` 里，而在 `web/src/fonts/misans/misans.css`，由 `scripts/split-misans.py` 生成（产物提交进仓库，正常构建不需要装 fonttools）。头部按**本项目自己的用字频率**切成 5 片覆盖界面全部文案，尾部生僻字直接指回原整包。**不要手改那个 css，也不要再写 `url(MiSans-VariableFont.woff2)` 直接引整包**；换字体或改切片策略时重跑脚本（用法见脚本头部注释）。
+
 ### 前端页面滚动容器
 移动端（`isAndroidRuntimeUserAgent() || isIosRuntimeUserAgent()`）的路由页面用原生 `.route-page-scroller`，桌面端才用 Radix `ScrollArea`，分支在 `router/RouteCard.tsx` 的 `RoutePageContent`。两条路径下页面拿到的 `scrollRef` 都指向**真正滚动的那个元素**（Radix 的 ref 也是指向 viewport），页面代码不要区分。改动 `.route-page-scroller` 的几何时对着 `.rt-ScrollAreaViewport` 那几条 App.css 规则核对：`.page-with-bottom-space` 一直是 `height: auto`，别给它 `flex-grow`。
 
