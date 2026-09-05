@@ -46,7 +46,8 @@
 栈里距栈顶超过一层的卡片会被打上 `content-visibility: hidden`（`router/RouteCard.tsx`），整棵子树没有布局盒。任何在挂载后靠读布局定尺寸的代码都要能容忍读到 0，且在重新露出来时自愈——ResizeObserver 会再触发一次，参考 `components/reslist/VirtualItemGrid.tsx` 里 `offsetWidth === 0` 的守卫。
 
 ### 前端渲染性能：三条踩过的红线
-- **静止态不要留 `transform`。** `translate3d(0,0,0)` 会把元素永久提升成合成层；全视口的 TabLayer / RouteCard 一张就是十几 MB 显存。动画一律用 `settleAtRest()` 收尾，它会 `stop()` 掉 filling 的动画再把 `transform` 复位成 `none`（顺序不能反：filling 的动画在层叠上压过内联样式）。
+- **静止态不要留 `transform`。** `translate3d(0,0,0)` 会把元素永久提升成合成层；全视口的 TabLayer / RouteCard 一张就是十几 MB 显存。动画一律用 `settleAtRest()` 收尾，再由 `releaseCompositingLayer()` 把 `transform` 复位成 `none`。
+- **motion 的 `stop()` 停不掉已经跑完的动画，别信它。** `NativeAnimation.stop()` 在 `state === "idle" || "finished"` 时直接 return，既不 commitStyles 也不 cancel；而本项目的动画一律 `fill: "both"` / `"forwards"`，跑完仍然停在**填充阶段**，填充阶段的动画**在层叠上压过内联样式**。所以「先 stop 再写 `node.style.transform`」是错的，写下去会被静默吃掉（Android 预见式返回整个失效就是这么来的，见 `backGestureFillingAnimationRegression.test.ts`）。唯一可靠的解除方式是自己 `getAnimations().cancel()`——`RouteCard` 里封装成了 `cancelFillingAnimations()`，`releaseCompositingLayer()` 第一步就是它。
 - **逐帧只改 `transform` / `opacity`。** `border-radius`、`box-shadow`、`background`、`filter` 一改就要重绘，全视口元素上一次带模糊的阴影重绘在中低端 Android 上就是毫秒级。返回手势里这些属性被量化到 16 档，只在跨档时写一次（`RouteCard.tsx` 的 `PAINT_PROGRESS_STEPS`）。
 - **`backdrop-filter` 按「屏上同时有几个」算账，不是按模糊半径。** 每一个都是一张独立合成面，外层一有 transform 动画就要逐帧重算。小控件上的模糊（开关、徽标）基本看不出效果，别加。
 - **会在列表里大量出现的组件，不要各自 `new ResizeObserver` / `new IntersectionObserver`**，走 `web/src/logic/sharedObservers.ts` 的 `observeResize` / `observeVisibility`。一张资源卡里就有 3 个 Squircle ＋ 5 个 AutoScrollText，虚拟化之后同时挂二十几张；共用一个 observer 实例，跨 C++/JS 边界的回调次数从上百降到 1。单例组件（页面级、hook 级）用不用都行。
