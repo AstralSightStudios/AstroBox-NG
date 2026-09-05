@@ -2,3 +2,11 @@ onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - core-js
   - esbuild
+# hyperos-bg 0.1.3 的 BgEffectBackground 里是一条无条件的 requestAnimationFrame
+# 循环，路由不可见时也照跑（见 web/src/layout/homeHeader/HomeBackground.tsx）。
+# 上游已合并 paused prop（leset0ng/hyperos-bg#1，merge d454569）但还没发版，
+# 这里先把合并后的构建产物打进 0.1.3。
+# **上游一旦发布带 paused 的版本，就升级依赖并把这个补丁连同 patches/ 一起删掉。**
+# 补丁内容 = 那个 PR 的产物，本地构建的 0.1.3 与 npm 上发布的字节一致，所以没有夹带。
+patchedDependencies:
+  hyperos-bg@0.1.3: patches/hyperos-bg@0.1.3.patch

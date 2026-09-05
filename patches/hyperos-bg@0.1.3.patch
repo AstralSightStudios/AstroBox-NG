@@ -1,0 +1,131 @@
+diff --git a/dist/index.d.mts b/dist/index.d.mts
+index 6334ba522e55dae547a7f6775372b11efcdaf04e..85fb1f876fbfc811d17aa2dd2cd85aa170cad2de 100644
+--- a/dist/index.d.mts
++++ b/dist/index.d.mts
+@@ -13,6 +13,19 @@ type BgEffectColors = {
+ //#region src/BgEffectBackground.d.ts
+ interface BgEffectBackgroundProps extends Omit<ComponentPropsWithoutRef<"div">, "content"> {
+   dynamicBackground?: boolean;
++  /**
++   * Suspends the render loop while keeping the WebGL context, program and
++   * buffers alive, so resuming does not pay for a shader recompile.
++   *
++   * The animation clock is frozen while paused, so the background resumes
++   * exactly where it stopped instead of jumping forward by the paused
++   * duration. The canvas keeps showing the last rendered frame.
++   *
++   * Useful when the background is mounted but not actually visible, e.g. on an
++   * inactive tab of a keep-alive router or an off-screen preview: without this
++   * the component keeps running a full-rate `requestAnimationFrame` loop.
++   */
++  paused?: boolean;
+   isFullSize?: boolean;
+   effectBackground?: boolean;
+   isOs3Effect?: boolean;
+@@ -25,6 +38,7 @@ interface BgEffectBackgroundProps extends Omit<ComponentPropsWithoutRef<"div">,
+ }
+ declare function BgEffectBackground({
+   dynamicBackground,
++  paused,
+   isFullSize,
+   effectBackground,
+   isOs3Effect,
+diff --git a/dist/index.mjs b/dist/index.mjs
+index ff61fde87b33a7df9ae91951fe2862032897f451..fa94bbfb3634416201999e38f003272cce70154a 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -951,9 +951,11 @@ function stepSpring(current, velocity, target, deltaTime, stiffness = 35, dampin
+ }
+ //#endregion
+ //#region src/BgEffectBackground.tsx
+-function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effectBackground = true, isOs3Effect = false, deviceType = "PAD", colorScheme = "light", colors, alpha = () => 1, content, children, className, style, bgStyle, ...props }) {
++function BgEffectBackground({ dynamicBackground = true, paused = false, isFullSize = false, effectBackground = true, isOs3Effect = false, deviceType = "PAD", colorScheme = "light", colors, alpha = () => 1, content, children, className, style, bgStyle, ...props }) {
+ 	const canvasRef = useRef(null);
+ 	const wrapperRef = useRef(null);
++	const pausedRef = useRef(paused);
++	const loopRef = useRef(null);
+ 	const preset = useMemo(() => {
+ 		const base = getPreset(deviceType, colorScheme, isOs3Effect);
+ 		if (!colors) return base;
+@@ -1003,6 +1005,7 @@ function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effe
+ 		const uPointRadiusMulti = gl.getUniformLocation(program, "uPointRadiusMulti");
+ 		const uSaturateOffset = gl.getUniformLocation(program, "uSaturateOffset");
+ 		const uLightOffset = gl.getUniformLocation(program, "uLightOffset");
++		let initialized = false;
+ 		const resize = () => {
+ 			const rect = host.getBoundingClientRect();
+ 			const dpr = window.devicePixelRatio || 1;
+@@ -1011,6 +1014,7 @@ function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effe
+ 			canvas.style.width = `${rect.width}px`;
+ 			canvas.style.height = `${rect.height}px`;
+ 			gl.viewport(0, 0, canvas.width, canvas.height);
++			if (initialized && frameId === 0) render(clock());
+ 		};
+ 		const observer = new ResizeObserver(resize);
+ 		observer.observe(host);
+@@ -1037,7 +1041,11 @@ function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effe
+ 		let stageVelocity = 0;
+ 		let lastFrameTime = startTime;
+ 		let nextStageTime = startTime + colorStageInterval;
+-		const draw = (now) => {
++		let pausedElapsed = 0;
++		let pausedSince = null;
++		/** Animation clock: real time minus paused time, frozen while paused. */
++		const clock = () => (pausedSince ?? performance.now()) - pausedElapsed;
++		const render = (now) => {
+ 			const width = host.clientWidth || 1;
+ 			const height = host.clientHeight || 1;
+ 			const bound = getBound(isFullSize ? height : height * .78, height, width);
+@@ -1070,10 +1078,36 @@ function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effe
+ 			gl.uniform4fv(uColors, new Float32Array(colors));
+ 			gl.uniform1f(uAlphaMulti, alphaValue);
+ 			gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+-			frameId = requestAnimationFrame(draw);
+ 		};
+-		frameId = requestAnimationFrame(draw);
++		const loop = (rafTime) => {
++			render(rafTime - pausedElapsed);
++			frameId = requestAnimationFrame(loop);
++		};
++		const startLoop = () => {
++			if (frameId !== 0) return;
++			if (pausedSince !== null) {
++				pausedElapsed += performance.now() - pausedSince;
++				pausedSince = null;
++			}
++			frameId = requestAnimationFrame(loop);
++		};
++		const stopLoop = () => {
++			if (frameId === 0) return;
++			cancelAnimationFrame(frameId);
++			frameId = 0;
++			pausedSince = performance.now();
++		};
++		loopRef.current = {
++			start: startLoop,
++			stop: stopLoop
++		};
++		initialized = true;
++		if (pausedRef.current) {
++			pausedSince = performance.now();
++			render(clock());
++		} else startLoop();
+ 		return () => {
++			loopRef.current = null;
+ 			cancelAnimationFrame(frameId);
+ 			observer.disconnect();
+ 			gl.bindBuffer(gl.ARRAY_BUFFER, null);
+@@ -1091,6 +1125,13 @@ function BgEffectBackground({ dynamicBackground = true, isFullSize = false, effe
+ 		isOs3Effect,
+ 		preset
+ 	]);
++	useEffect(() => {
++		pausedRef.current = paused;
++		const loop = loopRef.current;
++		if (!loop) return;
++		if (paused) loop.stop();
++		else loop.start();
++	}, [paused]);
+ 	const resolvedContent = resolveContent(content, children);
+ 	return /* @__PURE__ */ jsxs("div", {
+ 		ref: wrapperRef,
