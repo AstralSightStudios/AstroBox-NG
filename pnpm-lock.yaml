@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  hyperos-bg@0.1.3:
-    hash: c86c7d91414284cad4515eecbc1abd7f84a5f282e86c9e7b12aa23e7faf22ac7
-    path: patches/hyperos-bg@0.1.3.patch
-
 importers:
 
   .:
@@ -98,8 +93,8 @@ importers:
         specifier: ^2.3.6
         version: 2.3.6
       hyperos-bg:
-        specifier: ^0.1.3
-        version: 0.1.3(patch_hash=c86c7d91414284cad4515eecbc1abd7f84a5f282e86c9e7b12aa23e7faf22ac7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+        specifier: ^0.1.4
+        version: 0.1.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       motion:
         specifier: ^13.0.0
         version: 13.0.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -2628,8 +2623,8 @@ packages:
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
 
-  hyperos-bg@0.1.3:
-    resolution: {integrity: sha512-aIA0Z4M7FIPSD4Q5pxx1JDOuGAJrCci6u0TzHPMW3WXyfChYwm/dubFUdvPdiQtipRpTfgR5ekiKUiy7SgQRsA==}
+  hyperos-bg@0.1.4:
+    resolution: {integrity: sha512-QFx0jnkVNgUjs3V/Fdjbg/W1bANHeBzno4IM5xHo77l7s/CwpykZMCCf/TH53E4zCriCxOdd8t0G9hdy2mOnMA==}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
@@ -6020,7 +6015,7 @@ snapshots:
 
   html-void-elements@3.0.0: {}
 
-  hyperos-bg@0.1.3(patch_hash=c86c7d91414284cad4515eecbc1abd7f84a5f282e86c9e7b12aa23e7faf22ac7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+  hyperos-bg@0.1.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
