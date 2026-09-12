@@ -46,6 +46,7 @@
 栈里距栈顶超过一层的卡片会被打上 `content-visibility: hidden`（`router/RouteCard.tsx`），整棵子树没有布局盒。任何在挂载后靠读布局定尺寸的代码都要能容忍读到 0，且在重新露出来时自愈——ResizeObserver 会再触发一次，参考 `components/reslist/VirtualItemGrid.tsx` 里 `offsetWidth === 0` 的守卫。
 
 ### 前端渲染性能：踩过的红线
+- **全视口元素做 transform 动画时，必须在动画期间给 `will-change`。** 每帧那条 `duration: 0` 的动画在浏览器看来是**样式变更**而不是合成器动画，Chromium 不会因它提升图层（CompositeAfterPaint 之后静态 `translate3d` 也不再自动提升）——不提升就是整张全视口卡片连同整页内容逐帧重绘 + 重栅格。Pixel 7a（90Hz）实测同一页面：滚动 1.3% 掉帧、纯位移 3.5%、一加 scale 就是 34%，p90 从 14ms 涨到 64ms；atrace 里 `WebViewFunctor::drawVk` 每帧 17ms。加上 `will-change` 后返回手势掉帧 34%→8.8%、Tab 切换帧率 48fps→93fps。动画收尾要撤掉，别让全视口纹理常驻显存；被打断时不要撤（接手的那次已经设上了）。
 - **动画路径上不要用内联样式跟手，一律走 `animate()`。** 本项目的动画一律 `fill: "both"` / `"forwards"`，跑完仍停在**填充阶段**，而填充阶段的动画**在层叠上压过内联样式**——内联写法会被静默吃掉。新建的 WAAPI 动画天然压过之前那条，是这条路径上唯一可靠的写法。
 - **不要在任何可能与手势并发的地方 `getAnimations().cancel()`。** 跟手动画是 `duration: 0, fill: "forwards"`，**永远处于「已结束 + 填充中」**，无差别 cancel 分不出它和跑完的进入动画：在页面推入后 `IOS_PUSH_DURATION` 内开始返回手势，进入动画的收尾就会把跟手那条一起杀掉，卡片当场弹回。
 - **`releaseCompositingLayer()` 里那行 `transform: none` 其实是空操作，这是故意的。** motion 的 `stop()` 对已 finished 的动画直接 return（`state === "idle" || "finished"`），不 cancel，于是填充中的动画继续压着内联值。想让它真生效就得 cancel，而 cancel 会踩上一条——所以宁可不要那点释放合成层的收益，换手势路径彻底隔离。
