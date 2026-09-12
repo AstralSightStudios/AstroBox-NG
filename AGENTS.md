@@ -45,10 +45,11 @@
 
 栈里距栈顶超过一层的卡片会被打上 `content-visibility: hidden`（`router/RouteCard.tsx`），整棵子树没有布局盒。任何在挂载后靠读布局定尺寸的代码都要能容忍读到 0，且在重新露出来时自愈——ResizeObserver 会再触发一次，参考 `components/reslist/VirtualItemGrid.tsx` 里 `offsetWidth === 0` 的守卫。
 
-### 前端渲染性能：三条踩过的红线
-- **静止态不要留 `transform`。** `translate3d(0,0,0)` 会把元素永久提升成合成层；全视口的 TabLayer / RouteCard 一张就是十几 MB 显存。动画一律用 `settleAtRest()` 收尾，再由 `releaseCompositingLayer()` 把 `transform` 复位成 `none`。
-- **动画路径上不要用内联样式跟手，一律走 `animate()`。** 本项目的动画一律 `fill: "both"` / `"forwards"`，跑完仍停在**填充阶段**，而填充阶段的动画**在层叠上压过内联样式**——内联写法会被静默吃掉。新建的 WAAPI 动画天然压过之前那条，是这条路径上唯一可靠的写法。我为了省一次每帧分配把返回手势改成写 `node.style.transform`，结果 Android 预见式返回整个不动，来回折腾两个安装包才退回来；不变量由 `backGestureFillingAnimationRegression.test.ts` 钉住。
-- **motion 的 `stop()` 停不掉已经跑完的动画，别信它。** `NativeAnimation.stop()` 在 `state === "idle" || "finished"` 时直接 return，既不 commitStyles 也不 cancel。要真正解除只能自己 `getAnimations().cancel()`（`RouteCard` 里的 `cancelFillingAnimations()`）。`releaseCompositingLayer()` 第一步就是它——不这么做的话「收尾把 `transform` 复位成 `none`」永远是空操作，因为写进去的内联值被填充中的动画压着。
+### 前端渲染性能：踩过的红线
+- **动画路径上不要用内联样式跟手，一律走 `animate()`。** 本项目的动画一律 `fill: "both"` / `"forwards"`，跑完仍停在**填充阶段**，而填充阶段的动画**在层叠上压过内联样式**——内联写法会被静默吃掉。新建的 WAAPI 动画天然压过之前那条，是这条路径上唯一可靠的写法。
+- **不要在任何可能与手势并发的地方 `getAnimations().cancel()`。** 跟手动画是 `duration: 0, fill: "forwards"`，**永远处于「已结束 + 填充中」**，无差别 cancel 分不出它和跑完的进入动画：在页面推入后 `IOS_PUSH_DURATION` 内开始返回手势，进入动画的收尾就会把跟手那条一起杀掉，卡片当场弹回。
+- **`releaseCompositingLayer()` 里那行 `transform: none` 其实是空操作，这是故意的。** motion 的 `stop()` 对已 finished 的动画直接 return（`state === "idle" || "finished"`），不 cancel，于是填充中的动画继续压着内联值。想让它真生效就得 cancel，而 cancel 会踩上一条——所以宁可不要那点释放合成层的收益，换手势路径彻底隔离。
+- 上面三条是 2026-09-05 那次回归的全部教训：我为了省一次每帧分配把返回手势改成写 `node.style.transform`，Android 预见式返回整个不动，**让用户白装了三个安装包**才逐步退回。不变量由 `backGestureFillingAnimationRegression.test.ts` 钉住（三条断言都验证过能抓到对应回归）。改这块之前先想清楚：动画的层叠归属属于**行为语义**，不是可以顺手优化的实现细节；没有真机可验证时不要动。
 - **逐帧只改 `transform` / `opacity`。** `border-radius`、`box-shadow`、`background`、`filter` 一改就要重绘，全视口元素上一次带模糊的阴影重绘在中低端 Android 上就是毫秒级。返回手势里这些属性被量化到 16 档，只在跨档时写一次（`RouteCard.tsx` 的 `PAINT_PROGRESS_STEPS`）。
 - **`backdrop-filter` 按「屏上同时有几个」算账，不是按模糊半径。** 每一个都是一张独立合成面，外层一有 transform 动画就要逐帧重算。小控件上的模糊（开关、徽标）基本看不出效果，别加。
 - **会在列表里大量出现的组件，不要各自 `new ResizeObserver` / `new IntersectionObserver`**，走 `web/src/logic/sharedObservers.ts` 的 `observeResize` / `observeVisibility`。一张资源卡里就有 3 个 Squircle ＋ 5 个 AutoScrollText，虚拟化之后同时挂二十几张；共用一个 observer 实例，跨 C++/JS 边界的回调次数从上百降到 1。单例组件（页面级、hook 级）用不用都行。
