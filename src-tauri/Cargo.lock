@@ -6124,6 +6124,7 @@ dependencies = [
 name = "pluginsystem"
 version = "2.0.0"
 dependencies = [
+ "account",
  "anyhow",
  "base64 0.22.1",
  "chrono",
