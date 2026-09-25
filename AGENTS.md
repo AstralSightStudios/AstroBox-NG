@@ -65,6 +65,9 @@
 ### 前端页面滚动容器
 移动端（`isAndroidRuntimeUserAgent() || isIosRuntimeUserAgent()`）的路由页面用原生 `.route-page-scroller`，桌面端才用 Radix `ScrollArea`，分支在 `router/RouteCard.tsx` 的 `RoutePageContent`。两条路径下页面拿到的 `scrollRef` 都指向**真正滚动的那个元素**（Radix 的 ref 也是指向 viewport），页面代码不要区分。改动 `.route-page-scroller` 的几何时对着 `.rt-ScrollAreaViewport` 那几条 App.css 规则核对：`.page-with-bottom-space` 一直是 `height: auto`，别给它 `flex-grow`。
 
+### 界面装扮（主题 UI 皮肤）
+要制作主题包（`.abtheme`）或内置主题，先读 `web/docs/theme-authoring.md`（字段参考、素材规格、性能红线、设计原则），交付前用 `node scripts/validate-theme.mjs <主题文件夹>` 校验。改装扮相关代码时：新增可装扮的界面元素用 `useActiveThemeUiPart` 取装扮片段；主题 / 主题包一律按不可信输入处理，经 `parseThemeUi` 校验；**不要交付动画 SVG**（当图片显示时在主线程逐帧重绘，切页时必卡），动效用只动 transform / opacity 的 WAAPI（`tapMotion`、按压光晕、加载 `spin`）。
+
 ## 编译测试
 由于项目使用了Tauri框架，该框架极度依赖各种GUI库，如果直接尝试编译整个项目，你自带的Agent环境可能无法完成该操作——就算能完成，那也一定会造成大量的耗时。因此，如果你仅对`core`做了修改，那你可以只使用类似`cargo test -p corelib --manifest-path src-tauri/Cargo.toml`这样的命令来测试编译。如果用户要求你对`wasm`进行修改，请使用`wasm-pack build src-tauri/modules/app_wasm --target web`进行编译测试。对于前端，请不要执行任何代码来进行Lint相关操作，只应直接尝试build一遍以检查是否存在TypeScript语法错误，如果有就修改，如果没有就直接当做修改完成+测试通过。
 

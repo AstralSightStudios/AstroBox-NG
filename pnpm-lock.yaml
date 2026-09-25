@@ -86,6 +86,9 @@ importers:
       embla-carousel-wheel-gestures:
         specifier: ^8.1.0
         version: 8.1.0(embla-carousel@8.6.0)
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       harfbuzzjs:
         specifier: ^1.2.0
         version: 1.2.0
@@ -2535,6 +2538,9 @@ packages:
 
   fault@2.0.1:
     resolution: {integrity: sha512-WtySTkS4OKev5JtpHXnib4Gxiurzh5NCGvWrFaZ34m6JehfTUhKZvn9njTfw48t6JumVQOmrKqpmGcdwxnhqBQ==}
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   follow-redirects@1.15.11:
     resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
@@ -5909,6 +5915,8 @@ snapshots:
   fault@2.0.1:
     dependencies:
       format: 0.2.2
+
+  fflate@0.8.3: {}
 
   follow-redirects@1.15.11: {}
 
