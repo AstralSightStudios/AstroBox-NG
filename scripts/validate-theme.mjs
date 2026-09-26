@@ -224,7 +224,10 @@ const collectImageOnly = (value, trail) => {
     if (typeof child === "string" && schema.isThemeAssetId(child)) {
       const mediaSlot =
         key === "asset" &&
-        (/^pages\./.test(where) || /^nav\.(background|sideBackground)\./.test(where) || /^cards\.[^.]+(\.[^.]+)?\.image\./.test(where));
+        (/^pages\./.test(where) ||
+          /^banners\./.test(where) ||
+          /^nav\.(background|sideBackground)\./.test(where) ||
+          /^cards\.[^.]+(\.[^.]+)?\.image\./.test(where));
       if (!mediaSlot) imageOnly.push([where, child]);
     } else collectImageOnly(child, next);
   }

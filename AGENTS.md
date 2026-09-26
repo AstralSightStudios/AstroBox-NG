@@ -57,6 +57,13 @@
 - **会在列表里大量出现的组件，不要各自 `new ResizeObserver` / `new IntersectionObserver`**，走 `web/src/logic/sharedObservers.ts` 的 `observeResize` / `observeVisibility`。一张资源卡里就有 3 个 Squircle ＋ 5 个 AutoScrollText，虚拟化之后同时挂二十几张；共用一个 observer 实例，跨 C++/JS 边界的回调次数从上百降到 1。单例组件（页面级、hook 级）用不用都行。
 - **`infinite` 的 CSS 动画必须知道自己在不在视口里。** 跑马灯这类东西配上 `will-change: transform` 就是一条常驻合成层，滚出屏幕也照跑。用 `observeVisibility` 门控，不可见就 `animation-play-state: paused` 并把 `will-change` 撤掉（`AutoScrollText` 是范例）。
 
+### 设备页小组件：单一网格 + 显式摆放 + 自研拖拽
+设备页组件区是**一张** CSS grid，行列由 `web/src/logic/deviceWidgetGrid.ts` 算好内联到 `grid-row` / `grid-column`，拖拽在 `web/src/hooks/useDeviceWidgetDrag.ts`，行为由 `deviceWidgetDragRegression.test.ts` 钉住。以前用 dnd-kit + 每个分区一张 grid，拖动时整片卡片重挂载、来回互换、落点跑到别的分区，这几条别再走回去：
+- **不要按分区拆成多张 grid、也不要用首张卡片 id 当分区 key**：卡片换父节点或分区 key 变化都会整卡卸载重挂。
+- **落点只能由 `projectDeviceWidgetDrop` 算**（固定其余顺序、逐个试插入位置、取最近 + 滞回），不要改回「指针压到哪张卡就挪到它前后」——大小不一的卡片必然来回抖。
+- **拖动时页面本身不能动**：不要给页面加拿起时的缩小/后退 transform，指针下的卡片会整体挪位、落点全错；被拖卡片也不要加 `filter`（编辑栏常驻 backdrop-filter）。
+- 拖动期间 DOM 顺序冻结在拿起时的顺序（`domOrder`），不要去掉：触摸目标一旦被 React 挪走，touchmove 不再冒泡到网格，拦不住页面滚动。
+
 ### 前端字体：MiSans 是切过片的
 全局字体栈是 `-apple-system, "SF Pro", "PingFang SC", "Geist", Inter, MiSans`，字体回退是**逐字形**的：iOS / macOS 上汉字命中系统的 PingFang SC，MiSans 一次都走不到；Android 上前面几个全部落空（PingFang 是苹果独有），Geist 只有拉丁字母，于是**每一个汉字都落到 MiSans**——那是个 11.87 MB 的整包。
 
