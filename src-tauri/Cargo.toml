@@ -2,7 +2,6 @@
 members = [
     "modules/*",
     "plugins/*",
-    "vendor/wasmtime-internal-jit-debug-48.0.2",
 ]
 exclude = [
     "modules/app_esp32s3",
@@ -13,10 +12,4 @@ resolver = "3"
 rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }
 swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }
 wasmtime-internal-fiber = { git = "https://github.com/Searchstars/wasmtime", branch = "astrobox-38.0.4-android-fiber-fix" }
-# On Windows, let Wasmtime 38 and 48 share one native JIT debug registry.
-wasmtime-internal-jit-debug = { path = "vendor/wasmtime-internal-jit-debug-48.0.2" }
 tao = { git = "https://github.com/Searchstars/tao", branch = "fix/ios-scene-configuration-lifetime" }
-
-[profile.release]
-strip = true
-
