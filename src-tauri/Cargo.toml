@@ -16,3 +16,7 @@ wasmtime-internal-fiber = { git = "https://github.com/Searchstars/wasmtime", bra
 # On Windows, let Wasmtime 38 and 48 share one native JIT debug registry.
 wasmtime-internal-jit-debug = { path = "vendor/wasmtime-internal-jit-debug-48.0.2" }
 tao = { git = "https://github.com/Searchstars/tao", branch = "fix/ios-scene-configuration-lifetime" }
+
+[profile.release]
+strip = true
+
