@@ -14,6 +14,8 @@ editing this file. ``default-members`` is intentionally omitted: the private
 ``modules/app`` crate doesn't exist in a public checkout, and the tauri build
 (``scripts/tauri-runner.mjs``) ``cd``s into ``modules/app`` anyway, so it never
 relied on it.
+
+Vendored dependency patches are explicit members of this same pinned workspace.
 """
 
 import sys
@@ -28,11 +30,16 @@ from . import ui
 # workspace (still globbed by members, so explicitly excluded).
 WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3"]
 
+# Dependency patches outside the module/plugin globs must survive dev's repair.
+WORKSPACE_STATIC_MEMBERS = ["vendor/wasmtime-internal-jit-debug-48.0.2"]
+
 # [patch.crates-io] pins required by the workspace.
 PATCH_CRATES = [
     'rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }',
     'swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }',
     'wasmtime-internal-fiber = { git = "https://github.com/Searchstars/wasmtime", branch = "astrobox-38.0.4-android-fiber-fix" }',
+    # Both dev and release need the shared Windows JIT debug registry.
+    'wasmtime-internal-jit-debug = { path = "vendor/wasmtime-internal-jit-debug-48.0.2" }',
     'tao = { git = "https://github.com/Searchstars/tao", branch = "fix/ios-scene-configuration-lifetime" }',
 ]
 
@@ -100,7 +107,7 @@ def canonical_cargo_toml() -> str:
     """The one true content of ``src-tauri/Cargo.toml`` (with trailing newline)."""
     lines = [
         "[workspace]",
-        f'members = {_toml_array(["modules/*", "plugins/*"])}',
+        f'members = {_toml_array(["modules/*", "plugins/*", *WORKSPACE_STATIC_MEMBERS])}',
     ]
     if WORKSPACE_STATIC_EXCLUDES:
         lines.append(f"exclude = {_toml_array(WORKSPACE_STATIC_EXCLUDES)}")
