@@ -10064,12 +10064,11 @@ dependencies = [
 [[package]]
 name = "wasmtime-internal-jit-debug"
 version = "48.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70026f001b46af7552ce89cfe748f0dea59097e7c8c3740998d8019b73d87ee5"
 dependencies = [
  "cc",
  "object 0.39.1",
  "rustix 1.1.4",
+ "wasmtime-internal-jit-debug 38.0.4",
  "wasmtime-internal-versioned-export-macros 48.0.2",
 ]
 
