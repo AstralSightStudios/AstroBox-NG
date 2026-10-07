@@ -1,0 +1,105 @@
+[package]
+name = "tauri-runtime-cef"
+version = "0.1.0"
+description = "CEF runtime for Tauri, ported from tauri feat/cef branch onto published crates."
+authors = ["Tauri Programme within The Commons Conservancy", "byeongsu-hong"]
+homepage = "https://github.com/SableClient/tauri-runtime-cef"
+repository = "https://github.com/SableClient/tauri-runtime-cef"
+categories = ["gui"]
+license = "Apache-2.0 OR MIT"
+edition = "2024"
+rust-version = "1.88"
+
+[dependencies]
+base64 = "0.22"
+# Not actually used directly, just locking it.
+cef = { version = "=150.2.1", features = ["build-util", "linux-x11"] }
+# Not actually used directly, just locking it.
+cef-dll-sys = { version = "=150.2.1", default-features = false }
+dirs = "6"
+dioxus-debug-cell = "0.1"
+http = "1"
+kuchiki = { package = "kuchikiki", version = "0.8.8-speedreader" }
+html5ever = "0.29"
+log = "0.4.21"
+raw-window-handle = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tauri-runtime = "2.11.2"
+tauri-utils = { version = "2.9.2", features = [
+  "html-manipulation",
+] }
+url = "2"
+# beta.3 changed the drag-and-drop event API; keep the port on beta.2.
+winit = "=0.31.0-beta.2"
+
+[target."cfg(windows)".dependencies]
+softbuffer = { version = "0.4", default-features = false }
+windows = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Dwm",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Com",
+  "Win32_System_LibraryLoader",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
+
+[target."cfg(target_os = \"macos\")".dependencies]
+dispatch2 = "0.3"
+objc2 = "0.6"
+objc2-application-services = { version = "0.3", default-features = false, features = [
+  "HIServices",
+  "Processes",
+] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "NSApplication",
+  "NSBezierPath",
+  "NSColor",
+  "NSControl",
+  "NSDockTile",
+  "NSEvent",
+  "NSImage",
+  "NSImageView",
+  "NSProgressIndicator",
+  "NSResponder",
+  "NSRunningApplication",
+  "NSScreen",
+  "NSView",
+  "NSWindow",
+  "block2",
+  "objc2-core-graphics",
+  "objc2-quartz-core",
+] }
+objc2-quartz-core = { version = "0.3", default-features = false, features = [
+  "CALayer",
+  "objc2-core-graphics",
+] }
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "NSArray",
+  "NSObject",
+  "NSValue",
+  "NSRunLoop",
+  "NSString",
+  "NSThread",
+  "NSTimer",
+  "NSURL",
+] }
+
+[target."cfg(any(target_os = \"linux\", target_os = \"dragonfly\", target_os = \"freebsd\", target_os = \"openbsd\", target_os = \"netbsd\"))".dependencies]
+dlopen2 = { version = "0.8", features = ["derive"] }
+gtk = { version = "0.18", features = ["v3_24"] }
+libc = "0.2"
+x11-dl = "2.21"
+
+[features]
+default = ["sandbox"]
+devtools = []
+macos-private-api = ["tauri-runtime/macos-private-api"]
+sandbox = ["cef/sandbox"]
+
+[dev-dependencies]
+tauri = { version = "2", default-features = false, features = ["test"] }
+tempfile = "3"

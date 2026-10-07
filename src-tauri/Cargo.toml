@@ -6,6 +6,9 @@ members = [
 ]
 exclude = [
     "modules/app_esp32s3",
+    # Linux 专用的 CEF（Chromium）运行时，只作为 app 的 Linux 依赖被拉进来。
+    # 不做成员，免得在 macOS/Windows 上 `cargo check --workspace` 也去下载整套 CEF。
+    "vendor/tauri-runtime-cef",
 ]
 resolver = "3"
 

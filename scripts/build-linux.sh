@@ -35,6 +35,9 @@ repackage_deb() {
     if [ -f "$temp_dir/DEBIAN/control" ]; then
         sed -i 's/^Package: astro-box$/Package: astrobox-ng/' "$temp_dir/DEBIAN/control"
         echo "    Modified Package: astro-box -> astrobox-ng"
+        # Linux 已改用自带的 CEF（Chromium），tauri-cli 2.x 却总会注入 WebKitGTK 依赖。
+        sed -i -E '/^Depends:/{s/libwebkit2gtk-4\.1-0(, )?//; s/, $//}' "$temp_dir/DEBIAN/control"
+        echo "    Removed libwebkit2gtk-4.1-0 from Depends"
     fi
 
     dpkg-deb -b --root-owner-group "$temp_dir" "$abs_out"
@@ -270,6 +273,11 @@ check_deps() {
 # ============================================================
 
 step_sync() {
+    if [ "${SKIP_SYNC:-0}" = "1" ]; then
+        echo ""
+        info "跳过子仓库同步 (SKIP_SYNC=1)"
+        return 0
+    fi
     echo ""
     info "=========================================="
     info "Step 0/3: 同步子仓库 (abtools sync --private)"
@@ -288,6 +296,8 @@ step_build() {
     info "=========================================="
 
     cd "$PROJECT_ROOT"
+    # 预先整理 CEF（Chromium）运行时到 target/cef-runtime
+    bash "$PROJECT_ROOT/src-tauri/modules/app/linux/stage-cef-runtime.sh"
 
     local bundles=()
     local has_native_bundle=false
@@ -386,13 +396,26 @@ build_arch() {
 # 主流程
 # ============================================================
 
-show_menu
-prompt_selection "输入选项编号（如: 1 2 3 或 deb rpm arch）："
-selection_rc=$?
+if [ $# -gt 0 ]; then
+    SELECTED_TARGETS=()
+    for token in "$@"; do
+        case "$token" in
+            1|deb)       SELECTED_TARGETS+=("deb") ;;
+            2|rpm)       SELECTED_TARGETS+=("rpm") ;;
+            3|arch)      SELECTED_TARGETS+=("arch") ;;
+            a|all)       SELECTED_TARGETS=("deb" "rpm" "arch") ;;
+            *) err "无效参数: $token"; exit 1 ;;
+        esac
+    done
+else
+    show_menu
+    prompt_selection "输入选项编号（如: 1 2 3 或 deb rpm arch）："
+    selection_rc=$?
 
-if [ $selection_rc -ne 0 ] || [ ${#SELECTED_TARGETS[@]} -eq 0 ]; then
-    info "已取消"
-    exit 0
+    if [ $selection_rc -ne 0 ] || [ ${#SELECTED_TARGETS[@]} -eq 0 ]; then
+        info "已取消"
+        exit 0
+    fi
 fi
 
 echo ""
