@@ -26,9 +26,12 @@ from typing import List, Optional
 
 from . import ui
 
-# Crates that need a dedicated toolchain and must stay out of the default
-# workspace (still globbed by members, so explicitly excluded).
-WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3"]
+# Crates that must stay out of the default workspace:
+# - app_esp32s3 needs a dedicated toolchain (still globbed by members, so excluded);
+# - the vendored CEF runtime is only a Linux dependency of app. As a path dependency
+#   inside the workspace it would otherwise become a member, and `cargo check
+#   --workspace` on macOS/Windows would download the whole CEF distribution.
+WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3", "vendor/tauri-runtime-cef"]
 
 # Dependency patches outside the module/plugin globs must survive dev's repair.
 WORKSPACE_STATIC_MEMBERS = ["vendor/wasmtime-internal-jit-debug-48.0.2"]
