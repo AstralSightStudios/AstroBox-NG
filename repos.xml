@@ -104,6 +104,14 @@
     />
 
     <repo
+        name="Rust module: hostio"
+        url="https://github.com/AstralSightStudios/AstroBox-NG-Module-HostIO"
+        path="src-tauri/modules/hostio"
+        branch="main"
+        visibility="private"
+    />
+
+    <repo
         name="Rust module: netcfg"
         url="https://github.com/AstralSightStudios/AstroBox-NG-Module-NetCfg"
         path="src-tauri/modules/netcfg"
