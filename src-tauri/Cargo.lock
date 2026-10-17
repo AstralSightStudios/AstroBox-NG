@@ -1942,6 +1942,7 @@ dependencies = [
  "serde_repr",
  "sha1",
  "sha2",
+ "tar",
  "tokio",
  "tokio-util",
  "udp-stream",
