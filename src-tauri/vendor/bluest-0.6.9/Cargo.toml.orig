@@ -1,0 +1,77 @@
+[package]
+name = "bluest"
+version = "0.6.9"
+authors = ["Alex Moon"]
+edition = "2021"
+description = "A cross-platform Bluetooth Low Energy (BLE) library"
+documentation = "https://docs.rs/bluest"
+repository = "https://github.com/alexmoon/bluest/"
+license = "BSD-2-Clause OR Apache-2.0"
+keywords = ["bluetooth", "BLE", "gatt", "bluez", "corebluetooth"]
+categories = ["asynchronous", "hardware-support", "os"]
+
+[package.metadata.docs.rs]
+features = ["serde", "unstable", "l2cap"]
+default-target = "x86_64-apple-darwin"
+targets = [
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-linux-android"
+]
+
+[features]
+unstable = []
+l2cap = []
+serde = ["dep:serde", "uuid/serde", "bluer/serde"]
+
+[dependencies]
+async-trait = "0.1.57"
+futures-core = "0.3.28"
+futures-lite = { version = "1.13.0", default-features = false }
+serde = { version = "1.0.143", optional = true, features = ["derive"] }
+tracing = { version = "0.1.36", default-features = false }
+
+[dev-dependencies]
+tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread", "time"] }
+tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+uuid = "1.1.1"
+
+[target.'cfg(windows)'.dependencies]
+futures-channel = "0.3.24"
+windows = { version = "0.48.0", features = [
+    "implement",
+    "Foundation",
+    "Foundation_Collections",
+    "Devices_Enumeration",
+    "Devices_Bluetooth",
+    "Devices_Bluetooth_Advertisement",
+    "Devices_Bluetooth_GenericAttributeProfile",
+    "Devices_Radios",
+    "Storage_Streams",
+    "Win32_Foundation",
+    "Win32_System_LibraryLoader",
+    "Win32_System_SystemInformation"
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+bluer = { version = "0.16.1", features = ["bluetoothd"] }
+tokio = { version = "1.20.1", features = ["rt-multi-thread"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+java-spaghetti = "0.2.0"
+async-channel = "2.2.0"
+
+[target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
+async-broadcast = "0.7.2"
+async-channel = "2.3.1"
+objc2 = "0.6.1"
+objc2-foundation = "0.3.1"
+objc2-core-bluetooth = "0.3.1"
+dispatch2 = "0.3.0"
+
+[[example]]
+name = "scan"
+doc-scrape-examples = true

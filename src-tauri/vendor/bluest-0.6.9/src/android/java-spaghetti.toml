@@ -1,0 +1,55 @@
+
+include = [
+    "com/github/alexmoon/bluest/android/*",
+
+    "android/bluetooth/*",
+    "android/util/SparseArray",
+    "android/os/Parcelable",
+    "android/os/ParcelUuid",
+
+    "java/lang/Object",
+    "java/lang/Throwable",
+    "java/lang/StackTraceElement",
+    "java/lang/String",
+
+    "java/util/Iterator",
+    "java/util/UUID",
+    "java/util/List",
+    "java/util/Map",
+    "java/util/Set",
+    "java/util/Map$Entry",
+    
+    "java/io/InputStream",
+    "java/io/OutputStream",
+]
+
+[[documentation.pattern]]
+class_url_pattern           = "https://developer.android.com/reference/{CLASS}.html"
+method_url_pattern          = "https://developer.android.com/reference/{CLASS}.html#{METHOD}({ARGUMENTS})"
+constructor_url_pattern     = "https://developer.android.com/reference/{CLASS}.html#{CLASS.INNER}({ARGUMENTS})"
+field_url_pattern           = "https://developer.android.com/reference/{CLASS}.html#{FIELD}"
+argument_seperator          = ",%20"
+
+
+[logging]
+verbose = true
+
+[input]
+files = [
+    "/home/dirbaio/Android/Sdk/platforms/android-33/android.jar",
+    "build/bluest.jar",
+]
+
+[output]
+path = "bindings.rs"
+
+[codegen]
+method_naming_style             = "java"
+method_naming_style_collision   = "java_short_signature"
+keep_rejected_emits             = false
+
+[codegen.field_naming_style]
+const_finals    = true
+rustify_names   = false
+getter_pattern  = "{NAME}"
+setter_pattern  = "set_{NAME}"

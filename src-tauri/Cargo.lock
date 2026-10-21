@@ -1009,8 +1009,6 @@ dependencies = [
 [[package]]
 name = "bluest"
 version = "0.6.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0c911a419028965c201759adadc1b556d1ee50eb2dfcceec3acb765c80e96f6"
 dependencies = [
  "async-broadcast",
  "async-channel",
