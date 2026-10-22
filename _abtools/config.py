@@ -16,8 +16,13 @@ editing this file. ``default-members`` is intentionally omitted: the private
 relied on it.
 
 Vendored dependency patches are explicit members of this same pinned workspace.
+The pinned lists below are a *minimum*: when ``dev`` re-pins the file it carries
+over any ``exclude`` entry or ``[patch.crates-io]`` line it doesn't know about,
+(nor a ``members`` entry outside ``modules/`` and ``plugins/``), so a vendored
+patch committed without touching abtools is never stripped again.
 """
 
+import re
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -28,16 +33,24 @@ from . import ui
 
 # Crates that must stay out of the default workspace:
 # - app_esp32s3 needs a dedicated toolchain (still globbed by members, so excluded);
+# - the vendored bluest is patched in below; as a member its dev-dependencies would
+#   land in the lockfile;
 # - the vendored CEF runtime is only a Linux dependency of app. As a path dependency
 #   inside the workspace it would otherwise become a member, and `cargo check
 #   --workspace` on macOS/Windows would download the whole CEF distribution.
-WORKSPACE_STATIC_EXCLUDES = ["modules/app_esp32s3", "vendor/tauri-runtime-cef"]
+WORKSPACE_STATIC_EXCLUDES = [
+    "modules/app_esp32s3",
+    "vendor/bluest-0.6.9",
+    "vendor/tauri-runtime-cef",
+]
 
 # Dependency patches outside the module/plugin globs must survive dev's repair.
 WORKSPACE_STATIC_MEMBERS = ["vendor/wasmtime-internal-jit-debug-48.0.2"]
 
 # [patch.crates-io] pins required by the workspace.
 PATCH_CRATES = [
+    # Deeper CoreBluetooth event buffers (vendor/bluest-0.6.9/README.md).
+    'bluest = { path = "vendor/bluest-0.6.9" }',
     'rustix = { git = "https://github.com/bytecodealliance/rustix", version = "1.1.4" }',
     'swift-rs = { git = "https://github.com/Searchstars/swift-rs", branch = "main" }',
     'wasmtime-internal-fiber = { git = "https://github.com/Searchstars/wasmtime", branch = "astrobox-38.0.4-android-fiber-fix" }',
@@ -106,19 +119,73 @@ def _toml_array(items: List[str]) -> str:
     return "[\n" + body + "\n]"
 
 
-def canonical_cargo_toml() -> str:
-    """The one true content of ``src-tauri/Cargo.toml`` (with trailing newline)."""
+_SECTION_RE = re.compile(r"^\[([^\]]+)\]\s*$", re.M)
+_ARRAY_RE = r"^{}\s*=\s*\[(.*?)\]"
+_PATCH_KEY_RE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=")
+
+
+def _sections(text: str) -> dict:
+    """``{header: body}`` for each top-level ``[header]`` table in ``text``."""
+    matches = list(_SECTION_RE.finditer(text))
+    return {
+        m.group(1).strip(): text[m.end() : matches[i + 1].start() if i + 1 < len(matches) else len(text)]
+        for i, m in enumerate(matches)
+    }
+
+
+def _workspace_array(workspace: str, key: str) -> List[str]:
+    m = re.search(_ARRAY_RE.format(key), workspace, re.M | re.S)
+    return re.findall(r'"([^"]+)"', m.group(1)) if m else []
+
+
+def _carried_over(current: str):
+    """Members, excludes and patch lines of ``current`` that must survive a re-pin."""
+    sections = _sections(current)
+    workspace = sections.get("workspace", "")
+    # Per-module members are exactly the drift the re-pin exists to undo.
+    members = [
+        item
+        for item in _workspace_array(workspace, "members")
+        if not item.startswith(("modules/", "plugins/"))
+    ]
+    excludes = _workspace_array(workspace, "exclude")
+    patches = {}
+    for line in sections.get("patch.crates-io", "").splitlines():
+        line = line.strip()
+        key = _PATCH_KEY_RE.match(line)
+        if key:
+            patches[key.group(1)] = line
+    return members, excludes, patches
+
+
+def canonical_cargo_toml(current: Optional[str] = None) -> str:
+    """The pinned content of ``src-tauri/Cargo.toml`` (with trailing newline).
+
+    ``resolver`` and the ``modules/*`` / ``plugins/*`` globs are always the
+    pinned values. Everything else starts from the pinned lists; given the
+    file's ``current`` text, entries it has beyond those (and its own value for
+    a pinned patch) are kept rather than stripped.
+    """
+    members = ["modules/*", "plugins/*", *WORKSPACE_STATIC_MEMBERS]
+    excludes = list(WORKSPACE_STATIC_EXCLUDES)
+    patches = {_PATCH_KEY_RE.match(line).group(1): line for line in PATCH_CRATES}
+    if current:
+        extra_members, extra_excludes, current_patches = _carried_over(current)
+        members += [item for item in extra_members if item not in members]
+        excludes += [item for item in extra_excludes if item not in excludes]
+        patches.update(current_patches)
+
     lines = [
         "[workspace]",
-        f'members = {_toml_array(["modules/*", "plugins/*", *WORKSPACE_STATIC_MEMBERS])}',
+        f"members = {_toml_array(members)}",
     ]
-    if WORKSPACE_STATIC_EXCLUDES:
-        lines.append(f"exclude = {_toml_array(WORKSPACE_STATIC_EXCLUDES)}")
+    if excludes:
+        lines.append(f"exclude = {_toml_array(excludes)}")
     lines += [
         'resolver = "3"',
         "",
         "[patch.crates-io]",
-        *PATCH_CRATES,
+        *patches.values(),
         "",
     ]
     return "\n".join(lines)

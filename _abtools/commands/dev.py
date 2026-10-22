@@ -4,7 +4,8 @@
 Because ``src-tauri/Cargo.toml`` is pinned to a wildcard workspace that adapts
 to whatever module dirs exist, ``dev`` no longer rewrites it per private/public
 availability. It just self-heals the file if something drifted it away from the
-canonical content, then launches the requested dev server.
+canonical content (keeping exclude/patch entries it doesn't know about), then
+launches the requested dev server.
 """
 
 import os
@@ -16,12 +17,12 @@ from ..shell import run_cmd
 
 
 def _ensure_canonical_cargo(cargo_toml: Path, verbose: bool) -> None:
-    desired = canonical_cargo_toml()
     try:
         current = cargo_toml.read_text(encoding="utf-8") if cargo_toml.exists() else None
     except Exception as ex:
         ui.err(f"Warning: failed to read {cargo_toml}: {ex}")
         current = None
+    desired = canonical_cargo_toml(current)
 
     if current == desired:
         if verbose:
